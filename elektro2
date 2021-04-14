@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.sound.min.js"></script>
+   
+    <meta charset="utf-8" />
+
+<style>
+</style>
+
+<script>
+var sample1 = [];
+var sample2 = [];
+var sample3 = [];
+var sample4 = [];
+var sample5 = [];
+var sample6 = [];
+var sample7 = [];
+
+function setup() {
+	createCanvas(400, 400);
+	background(200,200,200);
+	var wellx = 50;
+	var well2x = 140;
+	var well3x = 230;
+	for (i=0;i<5;i++) {
+	sample1[i] = new Strand(wellx, 50, 12, 'RED');
+	sample2[i] = new Strand(wellx, 50, 25, 'BLUE');
+	sample3[i] = new Strand(wellx, 50, 10, 'YELLOW');
+	sample4[i] = new Strand(well2x, 50, 12, 'RED');
+	sample5[i] = new Strand(well2x, 50, 25, 'BLUE');
+		sample6[i] = new Strand(well3x, 50, 10, 'YELLOW');
+	sample7[i] = new Strand(well3x, 50, 25, 'BLUE');
+	} 
+	noLoop();
+	button = createButton('start');
+	button.position(300,50);
+  button.mousePressed();
+}
+
+function mousePressed() {
+	loop();
+}
+
+function draw() {
+background(200,200,200);
+	stroke(52,52,52);
+	fill(52,52,52);
+	textSize(20);
+	text('A a', 55, 40);
+	text('a a', 140,40);
+	text('A A', 220,40);
+	fill(190);
+  stroke(127);
+	rect(35,45,65,25);
+	rect(120,45,65,25);
+	rect(210,45,65,25);
+	for (i=0;i<sample1.length;i++) {
+	sample1[i].move();
+	sample1[i].show();
+	sample2[i].move();
+	sample2[i].show();
+	sample3[i].move();
+	sample3[i].show();
+	sample4[i].move();
+	sample4[i].show();
+	sample5[i].move();
+	sample5[i].show();
+	sample6[i].move();
+	sample6[i].show();
+	sample7[i].move();
+	sample7[i].show();
+if (sample3[0].y>350) {
+	noLoop();
+}
+}
+
+
+}
+
+class Strand {
+	constructor(x, y, len, col) {
+		this.x = x-len/2 + random(1,20);
+		this.y = y;
+		this.len = len;
+		this.col = col;
+
+	} 
+
+	move() {
+		this.y = this.y + 1/log(this.len);
+	}
+
+	show() {
+		stroke(this.col);
+		strokeWeight(2);
+		line(this.x+random(1,5), this.y+random(1,10), this.x + this.len + random(1,5), this.y+random(1,10));
+	}
+}
+
+</script>
+</head>
+
+<body>
+<h3>
+<br><br><br><br>
+	Der er taget en celle-prøve fra tre personer. I hver celleprøve er DNA'et blevet isoleret. <br>
+	DNA'er indeholder et gen (kaldet A eller a) og de tre personer er hhv. heterozygot (Aa), homozygot mht. en recessiv allel (aa) og homozygot mht. en dominant allel (AA).<br>
+	I hver DNA prøve er et gen isoleret og kopieret mange gange (med PCR).<br>
+	Det resulterende DNA blev klippet med et restriktionsenzym og resultatet er anbragt på en gel med henblik på gel-elektroforese. <br>
+	Klik på "start" for at starte gel-elektroforesen.<br>
+<br>
+	
+  </h3>
+</body>
+</html>
