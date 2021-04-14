@@ -29,10 +29,10 @@ function setup() {
 	sample1[i] = new Strand(wellx, 50, 12, 'RED');
 	sample2[i] = new Strand(wellx, 50, 25, 'BLUE');
 	sample3[i] = new Strand(wellx, 50, 10, 'YELLOW');
-	sample4[i] = new Strand(well2x, 50, 12, 'RED');
+	//sample4[i] = new Strand(well2x, 50, 12, 'RED');
 	sample5[i] = new Strand(well2x, 50, 25, 'BLUE');
-		sample6[i] = new Strand(well3x, 50, 10, 'YELLOW');
-	sample7[i] = new Strand(well3x, 50, 25, 'BLUE');
+	sample6[i] = new Strand(well3x, 50, 10, 'YELLOW');
+	sample7[i] = new Strand(well3x, 50, 25, 'RED');
 	} 
 	noLoop();
 	button = createButton('start');
