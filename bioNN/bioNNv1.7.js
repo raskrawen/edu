@@ -25,7 +25,7 @@ let development = false;
 let writeNumbers = false;
 let checkbox; let devCheckbox;
 let noise = 1; // factor around 1
-let branching = 6; //decrease for more neurons with 2 or 3 axons.
+let branching = 5; // 6decrease for more neurons with 2 or 3 axons.
 let stimulatingRatio = 5; // 1:num is inhib:stimulating neurons
 let speed = 10;
 let thresholdAvr = 29;
@@ -39,7 +39,7 @@ let noOptions = ['40', '15', '60', '80'];
 let clickX; let clickY;
 let lineDist;
 let infoBox;
-let message = "<h1>Model af neuralt netværk.</h1><h3>I hjernen findes nerveceller (neuroner), som er forbundet og signalerer til hinanden i et netværk. Hver nervecelle består af en krop (soma) og en til flere udløbere (axon'er).<br><br><I>Numbers</I> viser tærskelværdi og membranpotentiale (sorte), samt hver nervecelles type og ID (hvid). Typen kan være fremmende (stim) eller hæmmende (inhib).<br><br>Enkelte celler er sanseceller (gullige), som aktiveres fx af berøring. I modellen aktiveres de af og til, men kan også aktiveres af klik med musen.<br><br>Én celle repræsenterer sanseceller fra et øre (<I>Ear</I>), og det kan stimuleres via mikrofonen.<br><br>Nye nerveceller kan dannes ved at klikke mellem de eksisterende. <br>I <I>Development</I>-tilstand udvikles nye axoner fra de mest aktiverede neuroner.";
+let message = "<h1>Model af neuralt netværk.</h1><h3>I hjernen findes nerveceller, som er forbundet og signalerer til hinanden i et netværk. Hver nervecelle består af en krop (soma) og en til flere udløbere (axon'er).<br><br><I>Numbers</I> viser tærskelværdi og membranpotentiale (sorte), samt hver nervecelles type og ID (hvid). Typen kan være fremmende (stim) eller hæmmende (inhib).<br><br>Enkelte celler er sanseceller (gullige), som aktiveres fx af berøring eller duft. I modellen aktiveres de af og til, men kan også aktiveres af klik med musen.<br><br>Én celle repræsenterer sanseceller fra et øre, og de kan stimuleres via mikrofonen.<br><br>Nye nerveceller kan dannes ved at klikke mellem de eksisterende. <br>I <I>Development</I>-tilstand udvikles nye axoner fra de mest aktiverede neuroner.";
 let debugging = false;
 /*debugging mode: inhibitory neurons: small. Normal: green. Senseing: purple */
 
@@ -90,23 +90,23 @@ function drawGUI() {
     txt3.style('font-size', '18px');
     txt3.position(distInGUI * 3, height + 25);
     // branching
-    sliderBranching = createSlider(0, 100, 20, 5);
+    sliderBranching = createSlider(0, 100, branching, 5);
     sliderBranching.position(distInGUI * 4, height + 5);
     sliderBranching.style('width', '80px');
     sliderBranching.input(adjustBranching);
     let txt4 = createDiv('Branching');
     txt4.style('font-size', '18px');
     txt4.position(distInGUI * 4, height + 25);
-
-    // number of neurons:
-    sel = createSelect();
-    sel.position(distInGUI * 5, height + 5);
-    sel.option(noOptions[0]); sel.option(noOptions[1]); sel.option(noOptions[2]); sel.option(noOptions[3]);
-    sel.changed(newNumberOfNeurons);
     // button:
     resetButton = createButton('RePlay');
-    resetButton.position(distInGUI * 6, height + 5);
+    resetButton.position(distInGUI * 5, height + 5);
     resetButton.mouseClicked(reset);
+    // number of neurons:
+    sel = createSelect();
+    sel.position(distInGUI * 6, height + 5);
+    sel.option(noOptions[0]); sel.option(noOptions[1]); sel.option(noOptions[2]); sel.option(noOptions[3]);
+    sel.changed(newNumberOfNeurons);
+
 
     let txt = createDiv('Mouse here for info');
     txt.style('font-size', '18px')
@@ -364,8 +364,8 @@ function turnNumbersOn() {
 }
 
 function turnEarOn() {
-    if (earCheckbox.checked()) { 
-        ear = true; 
+    if (earCheckbox.checked()) {
+        ear = true;
         assignNeuronIDs();
         if (getAudioContext().state !== 'running') {
             getAudioContext().resume();
@@ -469,7 +469,7 @@ function draw() {
 // --------------------end of DRAW------------
 
 function neuronIsDead() {
-    let rand = int(random(0, neurons.length-1));
+    let rand = int(random(0, neurons.length - 1));
     console.log("moving neuron to dying");
     dyingNeurons.push(new DyingNeuron(neurons[rand].x, neurons[rand].y));
     // remove neuron from active duty:
