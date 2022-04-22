@@ -41,7 +41,7 @@ let noOptions = ['40', '15', '60', '80'];
 let clickX; let clickY;
 let lineDist;
 let infoBox;
-let message = "<h1>Model af neuralt netværk.</h1><h3>Kroppen er gennemløbes af over <u>86 milliarder nerveceller (neuroner)</u>, som er forbundet og signalerer til hinanden i et netværk. Hver nervecelle består af en cellekrop (soma) og en til flere udløbere (axon'er).<br><br><I>Numbers</I> viser <u>tærskelværdi</u> og <u>membranpotentiale</u> (sorte), samt hver nervecelles type og ID (hvid). Typen kan være <I>fremmende</I> (stim) eller <I>hæmmende</I> (inhib).<br><br>Enkelte celler er <I>sanseceller</I> (gullige), som aktiveres fx af berøring eller duft. I modellen aktiveres de af og til, men kan også aktiveres af <u>klik med musen</u>.<br><br>Én celle repræsenterer sanseceller fra et øre, og de kan stimuleres via mikrofonen, hvis <I>Ear</I> er slået til.<br><br>Nye nerveceller kan dannes ved at klikke mellem de eksisterende.<br>v.1.8";
+let message = "<h1>Model af neuralt netværk.</h1>v.1.8.<h3>Kroppen er gennemløbes af over <u>86 milliarder nerveceller (neuroner)</u>, som er forbundet og signalerer til hinanden i et netværk. Hver nervecelle består af en cellekrop (soma) og en til flere udløbere (axon'er).<br><br><I>Numbers</I> viser <u>tærskelværdi</u> og <u>membranpotentiale</u> (sorte), samt hver nervecelles type og ID (hvid). Typen kan være <I>fremmende</I> (stim) eller <I>hæmmende</I> (inhib).<br><br>Enkelte celler er <I>sanseceller</I> (gullige), som aktiveres fx af berøring eller duft. I modellen aktiveres de af og til, men kan også aktiveres af <u>klik med musen</u>.<br><br>Én celle repræsenterer sanseceller fra et øre, og de kan stimuleres via mikrofonen, hvis <I>Ear</I> er slået til.<br><br>Nye nerveceller kan dannes ved at klikke mellem de eksisterende.";
 //let message; 
 let debugging = false;
 /*debugging mode: inhibitory neurons: small. Normal: green. Senseing: purple */
@@ -52,7 +52,6 @@ function setup() {
     cvs.show;
     cvs.mouseClicked(mouseReleasedInCanvas);
     console.log("Startet");
-    message = loadStrings('messageBox.html');
     //noise = randomGaussian(1.1, 0.1);
     drawGUI();
     angleMode(DEGREES);
