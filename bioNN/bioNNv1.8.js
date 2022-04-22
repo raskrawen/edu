@@ -510,7 +510,7 @@ class Neuron {
         this.connectedTo = []; //should be an array
         // Stimulating or inhibiting neuron. false = inhibitory
         let determineStimulating = random(0, stimulatingRatio * 10) * noise;
-        if (determineStimulating <= 10) { //increase number for more inhibitory cells
+        if (determineStimulating <= 20) { //increase number for more inhibitory cells
             this.stimulating = false; // false = inhibiting
             if (debugging) { this.soma = 25; }
         }
