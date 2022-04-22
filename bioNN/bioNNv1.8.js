@@ -271,7 +271,7 @@ function turnToNeighborS() {
 function adjustAxonLength() {
     //every neuron:
     for (let i = 0; i < neurons.length; i++) {
-        // every neigbor:
+        // every neighbor:
         for (let j = 0; j < neurons[i].connectedTo.length; j++) {
             let no1connectedTo = neurons[i].connectedTo[j];
             let neighborX = neurons[no1connectedTo].x;
@@ -537,7 +537,7 @@ class Neuron {
     growNewAxon() {
         //console.log("in growing method");
         // Grow new axon after 50 activations. Max 4 axons:
-        if (this.activations > 50 && this.connectedTo.length < 3) {
+        if (this.activations > 100 && this.connectedTo.length < 3) {
             console.log("new axon growing");
             let newNeighbor;
             let d_shortest = width;
