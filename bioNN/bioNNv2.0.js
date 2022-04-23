@@ -35,11 +35,13 @@ let sel;
 let difficultyLevel = 1;
 let noOptions = ['level 1', 'level 2', 'level 3', 'level 4'];
 let clickX; let clickY;
+let clickCounter = 0;
 let lineDist;
 let infoBox;
-let message = "<h1>Byg et neuralt netværk.</h1><h3>Aktiver neuronen i øverste højre hjørne, ved at tilføje neuroner. <br>Undgå de røde hæmmende neuroner.";
+let message = "<h1>Byg et neuralt netværk.</h1><h3>Aktiver neuronen i øverste højre hjørne, ved at tilføje neuroner.";
 let debugging = false;
 let targetID;
+let txt3;
 /*debugging mode: inhibitory neurons: small. Normal: green. Senseing: purple */
 
 
@@ -48,12 +50,9 @@ function setup() {
     cvs.show;
     cvs.mouseClicked(mouseReleasedInCanvas);
     console.log("Startet");
-    //noise = randomGaussian(1.1, 0.1);
     drawGUI();
     angleMode(DEGREES);
     initializeNeurons();
-    //mic = new p5.AudioIn(); // start the Audio Input.
-    //mic.start();
     initializeInfoBox();
     if (debugging) { writeNumbers = true; }
 }
@@ -61,10 +60,10 @@ function setup() {
 function drawGUI() {
     let distInGUI = 100;
     Numberscheckbox = createCheckbox('Numbers', writeNumbers);
-    Numberscheckbox.position(distInGUI*0 + 5, height + 5);
+    Numberscheckbox.position(distInGUI * 0 + 5, height + 5);
     Numberscheckbox.changed(turnNumbersOn);
     devCheckbox = createCheckbox('Simulator', false);
-    devCheckbox.position(distInGUI*0 + 5, height + 20);
+    devCheckbox.position(distInGUI * 0 + 5, height + 20);
     devCheckbox.changed(backToSim);
     //  s
     pausedCheckbox = createCheckbox('Pause', false);
@@ -77,7 +76,6 @@ function drawGUI() {
     let txt2 = createDiv('Speed');
     txt2.style('font-size', '16px')
     txt2.position(distInGUI * 2, height + 25);
-    let sensitivity = 60;
     // button:
     resetButton = createButton('RePlay');
     resetButton.position(distInGUI * 3, height + 5);
@@ -87,16 +85,17 @@ function drawGUI() {
     sel.position(distInGUI * 4, height + 5);
     sel.option(noOptions[0]); sel.option(noOptions[1]); sel.option(noOptions[2]); sel.option(noOptions[3]);
     sel.changed(selectLevel);
+    // clickcountertext:
+    txt3 = createDiv('Click-tæller: ' + clickCounter);
+    txt3.style('font-size', '16px')
+    txt3.position(distInGUI * 5, height + 5);
     // infoBox: 
     let txt = createDiv('Mouse here for info');
     txt.style('font-size', '16px')
     txt.position(width - 200, height + 10);
 }
 
-
 function initializeNeurons() {
-    //console.log(numberOfNeurons + 1);
-    //console.log(sel.value());
     neurons = [];
     neuronSize = 1;
     //draw first neurons:
@@ -116,9 +115,9 @@ function initializeNeurons() {
     //inhib neurons:
     let k = 0;
     console.log(difficultyLevel);
-    difficultyLevel = difficultyLevel*2+4;
+    difficultyLevel = difficultyLevel * 2 + 4;
     for (j = 3; j < difficultyLevel; j++) {
-        neurons.push(new NeuronType(width-random(300, 800), height-random(200, 500), false));
+        neurons.push(new NeuronType(width - random(300, 800), height - random(200, 500), false));
         neurons[j].col = color(200 + random(0, 50), 20 + random(50, 100), 140 + random(50, 100));
         neurons[j].connectedTo[0] = j + 1;
         neurons[j].sensoryNeuron = true;
@@ -128,7 +127,7 @@ function initializeNeurons() {
     neurons[k].connectedTo[0] = 3;
 
     // set target:
-    targetID = neurons.length;  
+    targetID = neurons.length;
     neurons.push(new NeuronType(width - 100, 100, true));
     neurons[targetID].neuronSize = 10;
 
@@ -305,21 +304,6 @@ function initializeOneNewNeuron() {
     neurons[neurons.length - 1].drawOneNeuron();
 }
 
-function growNewNeuron() {
-    //randomly grow a new neuron on random position:
-    console.log("tegner ny tilf. celle");
-    neurons.push(new Neuron(random(0, width), random(0, height)));
-    actualNumberOfNeurons += 1;
-    neurons[neurons.length - 1].neuronID = neurons.length - 1;
-    console.log("ny celle er oprettet.");
-    checkOnEdge(40);
-    checkOverlap(70); // not more OR sketch will crash
-    // establish and draw new connection:
-    neurons[neurons.length - 1].findTwoClosestNeighbors();
-    neurons[neurons.length - 1].adjustOneAxonLength();
-    neurons[neurons.length - 1].turnToOneNeighbor();
-    neurons[neurons.length - 1].drawOneNeuron();
-}
 
 
 // interactivity-------------------------------------------------------
@@ -339,8 +323,9 @@ function mouseReleasedInCanvas() {
             }
         }
     }
-    if (!onNeuron && !development) { //make new neuron (not in dev mode)
+    if (!onNeuron) { //make new neuron
         //console.log("new cell");
+        clickCounter +=1;
         initializeOneNewNeuron();
     }
 }
@@ -359,7 +344,7 @@ function backToSim() {
 }
 
 function startGame() {
-    difficultyLevel=1;
+    difficultyLevel = 1;
     initializeNeurons();
 }
 
@@ -374,33 +359,11 @@ function turnNumbersOn() {
     else { writeNumbers = false; }
 }
 
-function turnEarOn() {
-    if (earCheckbox.checked()) {
-        ear = true;
-        assignNeuronIDs();
-        if (getAudioContext().state !== 'running') {
-            getAudioContext().resume();
-        }
-    }
-    else { ear = false; }
-}
-
 function turnPausedOn() {
     if (pausedCheckbox.checked()) {
         noLoop();
     }
     else { paused = false; loop(); }
-}
-
-function adjustSensitivity() {
-    // sliderSens.value  from 0 to 200. start = 100%, map to 25,35 interval.
-    thresholdAvr = map(sliderSensitivity.value(), 0, 200, 35, 25);
-    sensitivityRatio = 4; //avr = 5. 100/20=5. 1:5 inhib:stim is nm
-}
-
-function adjustBranching() {
-    // begin = 10% branching. 
-    branching = sliderBranching.value();
 }
 
 function reset() {
@@ -443,17 +406,24 @@ function draw() {
             //n.writeActivations();
         }
     }
+    updateClickCounter();
     //winning the game: 
-        if (neurons[targetID].pot>neurons[targetID].threshold) {
-            console.log("WINNER");
-            neurons[targetID].col = color(255,255,255);
-  
-        }
+    if (neurons[targetID].pot > neurons[targetID].threshold) {
+        neurons[targetID].writeWinner();
+        noLoop();
+    }
 
 
 }
 
 // --------------------end of DRAW------------
+
+function updateClickCounter() {
+    txt3.remove();
+    txt3 = createDiv('Click-tæller: ' + clickCounter);
+    txt3.style('font-size', '16px')
+    txt3.position(100 * 5, height + 5);
+}
 
 function neuronIsDead() {
     let rand = int(random(0, neurons.length - 1));
@@ -684,6 +654,21 @@ class Neuron {
         }
     }
 
+    writeWinner() {
+        console.log("WINNER");
+        fill('white');
+        rectMode(CENTER);
+        rect(this.x, this.y - 50,200,60);
+        fill('black');
+        textSize(20);
+        textAlign(CENTER);
+        let winText = "VINDER";
+        text(winText, this.x, this.y - 50);
+        text(clickCounter, this.x, this.y - 25);
+        this.col = color(255, 255, 255);
+    }
+
+
     writeNeuronType() {
         fill('white');
         textSize(map(numberOfNeurons, 15, 80, 15, 10));
@@ -695,16 +680,7 @@ class Neuron {
         text(typeText, this.x, this.y + this.soma / 3);
     }
 
-    writeActivations() {
-        fill('white');
-        textSize(12);
-        textAlign(LEFT);
-        let idText;
-        idText = this.activations;
-        text(idText, this.x + 12, this.y + 5);
-
-    }
-
+    
     writeNeuronID() { //write ID
         fill('white');
         textSize(12);
