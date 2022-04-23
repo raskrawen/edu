@@ -77,7 +77,7 @@ function drawGUI() {
     sliderSpeed = createSlider(1, 30, 10, 1); //min, max, start, step
     sliderSpeed.position(distInGUI * 2, height + 5);
     sliderSpeed.style('width', '80px');
-    let txt2 = createDiv('Speed');
+    let txt2 = createDiv('Hastighed');
     txt2.style('font-size', '16px')
     txt2.position(distInGUI * 2, height + 25);
     // button:
