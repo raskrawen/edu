@@ -39,7 +39,8 @@ let paused = false;
 let pixelSum;
 let capture;
 let sel;
-let noOptions = ['40', '15', '60', '80'];
+let selLevel=2;
+let noOptions = ['15', '40', '60', '80'];
 let clickX; let clickY;
 let lineDist;
 let infoBox;
@@ -109,7 +110,7 @@ function drawGUI() {
     sel = createSelect();
     sel.position(distInGUI * 6, height + 5);
     sel.option(noOptions[0]); sel.option(noOptions[1]); sel.option(noOptions[2]); sel.option(noOptions[3]);
-    sel.selected(numberOfNeurons);
+    sel.selected(noOptions[1]);
     sel.changed(newNumberOfNeurons);
 
 
@@ -156,14 +157,7 @@ function initializeInfoBox() {
     infoBox.position(200, 50);
 }
 
-function newNumberOfNeurons() { //chosen from slider
-    points = []; // reset clicks
-    numberOfNeurons = int(sel.value());
-    sel.selected(numberOfNeurons);
-    // new set of neurons:
-    neurons = [];
-    initializeNeurons();
-}
+
 
 function showNeurons() {
     background(200);
@@ -324,6 +318,16 @@ function growNewNeuron() {
 
 
 // interactivity-------------------------------------------------------
+
+function newNumberOfNeurons() { //chosen from slider
+    points = []; // reset clicks
+    numberOfNeurons = int(sel.value());
+    //sel.selected(noOptions[selLevel]);
+    // new set of neurons:
+    neurons = [];
+    initializeNeurons();
+}
+
 function mouseReleasedInCanvas() {
     let onNeuron;
     console.log("mouse released");
@@ -403,15 +407,13 @@ function rePlay() {
     loop();
     ear = false; paused = false; 
     console.log(numberOfNeurons);
-    sel.selected(numberOfNeurons);
+    let setSelect = str(numberOfNeurons);
+    sel.selected(setSelect);
     removeElements(); //not the canvas
     points = [];
     neurons = [];
     setup();
 }
-
-
-
 
 // running tasks ----------------------------------------------------------
 function draw() {
