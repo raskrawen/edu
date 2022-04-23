@@ -154,7 +154,7 @@ function initializeNeurons() {
 function initializeInfoBox() {
     infoBox = createDiv(message);
     infoBox.style("width: 600px;");
-    infoBox.style("height: 300px;");
+    infoBox.style("height: 350px;");
     infoBox.style("padding: 10px;");
     //infoBox.style("f");
     infoBox.style("background-color: white");
@@ -410,11 +410,11 @@ function draw() {
             //n.writeActivations();
         }
     }
+    writeGameTags();
     updateClickCounter();
     //winning the game: 
     if (neurons[targetID].pot > neurons[targetID].threshold) {
         neurons[targetID].writeWinner();
-        noLoop(); //issue?
     }
     if (debugging) {
         neurons[targetID].writeWinner();
@@ -428,6 +428,16 @@ function updateClickCounter() {
     txt3 = createDiv('Click-tæller: ' + clickCounter);
     txt3.style('font-size', '16px')
     txt3.position(100 * 5, height + 5);
+}
+
+function writeGameTags() {
+    fill('black');
+    textSize(12);
+    textAlign(CENTER);
+    // start: 
+    text('Start', neurons[0].x, neurons[0].y + neurons[0].soma / 1.3);
+    // goal: 
+    text('Mål', neurons[targetID].x, neurons[targetID].y + neurons[targetID].soma / 1.3);
 }
 
 function scaleMP(pot) {
@@ -651,16 +661,18 @@ class Neuron {
 
     writeWinner() {
         console.log("WINNER");
-        fill('white');
+        this.col = color(255, 255, 0);
+        this.drawOneNeuron();
+        fill('WHITE');
         rectMode(CENTER);
-        rect(this.x, this.y - 50, 180, 60);
+        rect(this.x, this.y - 50, 200, 60);
         fill('black');
         textSize(20);
         textAlign(CENTER);
-        text('VINDER', this.x, this.y - 50);
+        text('DU VINDER,', this.x, this.y - 50);
         textSize(12);
         text('med ' + clickCounter + ' neuroner', this.x, this.y - 25);
-        this.col = color(255, 255, 255);
+        noLoop();
     }
 
 
