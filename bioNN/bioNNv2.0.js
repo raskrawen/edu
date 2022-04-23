@@ -4,15 +4,18 @@ by: Rasmus Kragh Wendelbo
 using: p5 library by p5js.org
 license: CC-BY-NC 4.0
 topic: Simulation of neurons network
-Version: 1.8.1
+version: 2.0
 features: 
 - GAME mode
+- clickcounter
+- inhibitory neurons fire more often
+- infobox text
+
 */
 
 let cvs;
 let neurons = [];
 let dyingNeurons = [];
-let points = [];
 let neuronSize = 1;
 let numberOfNeurons = 40; //avr=50
 let actualNumberOfNeurons;
@@ -38,10 +41,11 @@ let clickX; let clickY;
 let clickCounter = 0;
 let lineDist;
 let infoBox;
-let message = "<h1>Byg et neuralt netværk.</h1><h3>Aktiver neuronen i øverste højre hjørne, ved at tilføje neuroner.";
-let debugging = false;
+let message = "<h1>Byg et neuralt netværk.</h1><h3>Mål: Aktiver den grønne neuron i øverste højre hjørne.<br><br> Tilføje nye neuroner ved klik med musen. <br>Tilføj så få nye neuroner som muligt.<br><br>Aktivér den gullige sansecelle i nederste venstre hjørne med museklik.<br><br>Undgå de lyserøde hæmmende neuroner.<br>";
 let targetID;
 let txt3;
+let debugging = false;
+
 /*debugging mode: inhibitory neurons: small. Normal: green. Senseing: purple */
 
 
@@ -59,7 +63,7 @@ function setup() {
 
 function drawGUI() {
     let distInGUI = 100;
-    Numberscheckbox = createCheckbox('Numbers', writeNumbers);
+    Numberscheckbox = createCheckbox('Numre', writeNumbers);
     Numberscheckbox.position(distInGUI * 0 + 5, height + 5);
     Numberscheckbox.changed(turnNumbersOn);
     devCheckbox = createCheckbox('Simulator', false);
@@ -79,7 +83,7 @@ function drawGUI() {
     // button:
     resetButton = createButton('RePlay');
     resetButton.position(distInGUI * 3, height + 5);
-    resetButton.mouseClicked(reset);
+    resetButton.mouseClicked(rePlay);
     // number of neurons:
     sel = createSelect();
     sel.position(distInGUI * 4, height + 5);
@@ -90,7 +94,7 @@ function drawGUI() {
     txt3.style('font-size', '16px')
     txt3.position(distInGUI * 5, height + 5);
     // infoBox: 
-    let txt = createDiv('Mouse here for info');
+    let txt = createDiv('Mus her for info');
     txt.style('font-size', '16px')
     txt.position(width - 200, height + 10);
 }
@@ -98,7 +102,7 @@ function drawGUI() {
 function initializeNeurons() {
     neurons = [];
     neuronSize = 1;
-    //draw first neurons:
+    //draw first neuron:
     neurons.push(new NeuronType(49, height - 50, true));
     console.log(neurons[0]);
     neurons[0].sensoryNeuron = true;
@@ -115,21 +119,22 @@ function initializeNeurons() {
     //inhib neurons:
     let k = 0;
     console.log(difficultyLevel);
-    difficultyLevel = difficultyLevel * 2 + 4;
-    for (j = 3; j < difficultyLevel; j++) {
+    let noOfInhibNeurons = difficultyLevel * 2 + 4;
+    for (j = 3; j < noOfInhibNeurons; j++) {
         neurons.push(new NeuronType(width - random(300, 800), height - random(200, 500), false));
         neurons[j].col = color(200 + random(0, 50), 20 + random(50, 100), 140 + random(50, 100));
         neurons[j].connectedTo[0] = j + 1;
         neurons[j].sensoryNeuron = true;
         k = j;
-        console.log(j);
+        //console.log(j);
     }
     neurons[k].connectedTo[0] = 3;
 
     // set target:
     targetID = neurons.length;
     neurons.push(new NeuronType(width - 100, 100, true));
-    neurons[targetID].neuronSize = 10;
+    neurons[targetID].col = color(29, 133, 40);
+    neurons[targetID].neuronSize = 2;
 
     //when all neurons have been drawn:
     assignNeuronIDs();
@@ -149,12 +154,14 @@ function initializeNeurons() {
 function initializeInfoBox() {
     infoBox = createDiv(message);
     infoBox.style("width: 600px;");
-    infoBox.style("height: 500px;");
+    infoBox.style("height: 300px;");
     infoBox.style("padding: 10px;");
     //infoBox.style("f");
     infoBox.style("background-color: white");
     infoBox.style("z-index: -100");
     infoBox.position(200, 50);
+    console.log("ini infobox");
+
 }
 
 
@@ -325,7 +332,7 @@ function mouseReleasedInCanvas() {
     }
     if (!onNeuron) { //make new neuron
         //console.log("new cell");
-        clickCounter +=1;
+        clickCounter += 1;
         initializeOneNewNeuron();
     }
 }
@@ -366,14 +373,13 @@ function turnPausedOn() {
     else { paused = false; loop(); }
 }
 
-function reset() {
+function rePlay() {
     loop();
-    difficultyLevel = 1;
-    sel.selected('level 1');
-    ear = false; paused = false; //numberOfNeurons = 40;
+    sel.selected(noOptions[difficultyLevel]);
+    paused = false; //numberOfNeurons = 40;
     removeElements(); //not the canvas?
-    point = [];
     neurons = [];
+    loop();
     setup();
 }
 
@@ -387,9 +393,7 @@ function draw() {
     } else {
         infoBox.style("z-index: -100");
     }
-
     frameRate(sliderSpeed.value());
-
     for (let n of neurons) {
         //n.growNewAxon();
         n.drawOneNeuron();
@@ -410,10 +414,11 @@ function draw() {
     //winning the game: 
     if (neurons[targetID].pot > neurons[targetID].threshold) {
         neurons[targetID].writeWinner();
-        noLoop();
+        noLoop(); //issue?
     }
-
-
+    if (debugging) {
+        neurons[targetID].writeWinner();
+    }
 }
 
 // --------------------end of DRAW------------
@@ -423,16 +428,6 @@ function updateClickCounter() {
     txt3 = createDiv('Click-tæller: ' + clickCounter);
     txt3.style('font-size', '16px')
     txt3.position(100 * 5, height + 5);
-}
-
-function neuronIsDead() {
-    let rand = int(random(0, neurons.length - 1));
-    console.log("moving neuron to dying");
-    dyingNeurons.push(new DyingNeuron(neurons[rand].x, neurons[rand].y));
-    // remove neuron from active duty:
-    neurons.splice(rand, 1);
-    actualNumberOfNeurons -= 1;
-    console.log("removed a neuron"); // POSSIBLE ISSUE
 }
 
 function scaleMP(pot) {
@@ -658,13 +653,13 @@ class Neuron {
         console.log("WINNER");
         fill('white');
         rectMode(CENTER);
-        rect(this.x, this.y - 50,200,60);
+        rect(this.x, this.y - 50, 200, 60);
         fill('black');
         textSize(20);
         textAlign(CENTER);
-        let winText = "VINDER";
-        text(winText, this.x, this.y - 50);
-        text(clickCounter, this.x, this.y - 25);
+        text('VINDER', this.x, this.y - 50);
+        textSize(12);
+        text('med ' + clickCounter + ' neuroner', this.x, this.y - 25);
         this.col = color(255, 255, 255);
     }
 
@@ -680,7 +675,7 @@ class Neuron {
         text(typeText, this.x, this.y + this.soma / 3);
     }
 
-    
+
     writeNeuronID() { //write ID
         fill('white');
         textSize(12);
@@ -737,9 +732,20 @@ class Neuron {
 
     fireSensoryNeurons(n) {
         if (this.sensoryNeuron) {
-            let rand = noise * random(0, n); // n norm 1000
-            if (rand > 995) {
-                this.pot += 5 * sensitivityRatio; //ratio 0..10
+            //stimulating neuron fire seldomly:
+            if (this.stimulating) {
+                let rand = noise * random(0, n); // n norm 1000
+                if (rand > 995) {
+                    this.pot += 5 * sensitivityRatio; //ratio 0..10
+                }
+            }
+            // inhibitory neurons fire more often:
+            if (!this.stimulating) {
+                //console.log("inhib");
+                let rand = noise * random(0, n); // n norm 1000
+                if (rand > 800) {
+                    this.pot += 5 * sensitivityRatio; //ratio 0..10
+                }
             }
         }
     }
@@ -789,11 +795,11 @@ class Neuron {
             //inhibitory neuron:
             else {
                 if (neurons[this.connectedTo[j]].pot > 10) {
-                    neurons[this.connectedTo[j]].pot -= 5 + this.preSynLen / 2;
+                    neurons[this.connectedTo[j]].pot -= 10 + this.preSynLen / 2;
                 }
             }
-            //let post-synapse length grow until 30: CORRECT???
-            if (neurons[this.connectedTo[j]].preSynLen < 30) {
+            //let post-synapse length grow until 25: 
+            if (neurons[this.connectedTo[j]].preSynLen < 25) {
                 neurons[this.connectedTo[j]].preSynLen += 0.1;
             }
 

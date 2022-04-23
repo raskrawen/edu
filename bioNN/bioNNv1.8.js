@@ -104,11 +104,12 @@ function drawGUI() {
     // button:
     resetButton = createButton('RePlay');
     resetButton.position(distInGUI * 5, height + 5);
-    resetButton.mouseClicked(reset);
+    resetButton.mouseClicked(rePlay);
     // number of neurons:
     sel = createSelect();
     sel.position(distInGUI * 6, height + 5);
     sel.option(noOptions[0]); sel.option(noOptions[1]); sel.option(noOptions[2]); sel.option(noOptions[3]);
+    sel.selected(numberOfNeurons);
     sel.changed(newNumberOfNeurons);
 
 
@@ -158,6 +159,7 @@ function initializeInfoBox() {
 function newNumberOfNeurons() { //chosen from slider
     points = []; // reset clicks
     numberOfNeurons = int(sel.value());
+    sel.selected(numberOfNeurons);
     // new set of neurons:
     neurons = [];
     initializeNeurons();
@@ -397,11 +399,13 @@ function adjustBranching() {
     branching = sliderBranching.value();
 }
 
-function reset() {
+function rePlay() {
     loop();
-    ear = false; paused = false; //numberOfNeurons = 40;
-    removeElements(); //not the canvas?
-    point = [];
+    ear = false; paused = false; 
+    console.log(numberOfNeurons);
+    sel.selected(numberOfNeurons);
+    removeElements(); //not the canvas
+    points = [];
     neurons = [];
     setup();
 }
