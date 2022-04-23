@@ -39,8 +39,8 @@ let paused = false;
 let pixelSum;
 let capture;
 let sel;
-let selLevel=2;
 let noOptions = ['15', '40', '60', '80'];
+let selLevel=noOptions[1];
 let clickX; let clickY;
 let lineDist;
 let infoBox;
@@ -110,7 +110,7 @@ function drawGUI() {
     sel = createSelect();
     sel.position(distInGUI * 6, height + 5);
     sel.option(noOptions[0]); sel.option(noOptions[1]); sel.option(noOptions[2]); sel.option(noOptions[3]);
-    sel.selected(noOptions[1]);
+    sel.selected(selLevel);
     sel.changed(newNumberOfNeurons);
 
 
@@ -321,6 +321,7 @@ function growNewNeuron() {
 
 function newNumberOfNeurons() { //chosen from slider
     points = []; // reset clicks
+    selLevel = sel.value();
     numberOfNeurons = int(sel.value());
     //sel.selected(noOptions[selLevel]);
     // new set of neurons:
@@ -407,8 +408,7 @@ function rePlay() {
     loop();
     ear = false; paused = false; 
     console.log(numberOfNeurons);
-    let setSelect = str(numberOfNeurons);
-    sel.selected(setSelect);
+    sel.selected(selLevel);
     removeElements(); //not the canvas
     points = [];
     neurons = [];
