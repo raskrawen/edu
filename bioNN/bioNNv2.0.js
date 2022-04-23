@@ -653,7 +653,7 @@ class Neuron {
         console.log("WINNER");
         fill('white');
         rectMode(CENTER);
-        rect(this.x, this.y - 50, 200, 60);
+        rect(this.x, this.y - 50, 180, 60);
         fill('black');
         textSize(20);
         textAlign(CENTER);
