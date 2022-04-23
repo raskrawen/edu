@@ -123,12 +123,15 @@ function initializeNeurons() {
     neurons = [];
     neuronSize = 50 / numberOfNeurons;
     if (neuronSize > 1.3) { neuronSize = 1.3; }
-    while (neurons.length < numberOfNeurons) {
+    // make neurons:
+    for (let m = 0; m < 20; m++) {
         for (let i = 0; i < numberOfNeurons; i++) {
             neurons.push(new Neuron(random(width), random(height)));
         }
         checkOnEdge(40);
         checkOverlap(70);
+        // when sufficient neurons:
+        if (neurons.length >= numberOfNeurons) { m = 21; }
     }
     //first: incr for longer axons. Sec: decrease for more axons:
     findNeigbour(2, branching);
@@ -186,7 +189,7 @@ function checkOverlap(n) {
         for (let j = 0; j < neurons.length; j++) {
             // two overlapping somas, mini:
             if (i !== j && dist(neurons[i].x, neurons[i].y, neurons[j].x, neurons[j].y) < minimumDistance) {
-                 
+
                 // remove neuron from active duty:
                 neurons.splice(j, 1);
                 actualNumberOfNeurons -= 1;
