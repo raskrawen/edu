@@ -41,7 +41,7 @@ let clickX; let clickY;
 let clickCounter = 0;
 let lineDist;
 let infoBox;
-let message = "<h1>Byg et neuralt netværk.</h1><h3>Mål: Aktiver den grønne neuron i øverste højre hjørne.<br><br> Tilføje nye neuroner ved klik med musen. <br>Tilføj så få nye neuroner som muligt.<br><br>Aktivér den gullige sansecelle i nederste venstre hjørne med museklik.<br><br>Undgå de lyserøde hæmmende neuroner.<br>";
+let message = "<h1>Byg et neuralt netværk.</h1><h3>Mål: Aktiver den grønne neuron i øverste højre hjørne.<br><br> Tilføje nye neuroner ved klik med musen.<br>De nye neuroner skal sende nervesignal fra den gullige sansecellen i nederste venstre hjørne til den grønne målcelle.<br><br>Tilføj så få nye neuroner som muligt.<br><br>Aktivér sansecellen i nederste venstre hjørne med museklik.<br><br>Undgå de lyserøde hæmmende neuroner.<br>";
 let targetID;
 let txt3;
 let debugging = false;
