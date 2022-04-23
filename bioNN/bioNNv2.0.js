@@ -37,7 +37,7 @@ let noOptions = ['level 1', 'level 2', 'level 3', 'level 4'];
 let clickX; let clickY;
 let lineDist;
 let infoBox;
-let message = "<h1>Byg et neuralt netværk.</h1><h3>Aktiver neuronen i øverste højre hjørne, ved at tilføje neuroner.";
+let message = "<h1>Byg et neuralt netværk.</h1><h3>Aktiver neuronen i øverste højre hjørne, ved at tilføje neuroner. <br>Undgå de røde hæmmende neuroner.";
 let debugging = false;
 let targetID;
 /*debugging mode: inhibitory neurons: small. Normal: green. Senseing: purple */
@@ -367,15 +367,6 @@ function selectLevel() {
     let splitString = split(sel.value(), ' ');
     difficultyLevel = int(splitString[1]);
     initializeNeurons();
-}
-
-function turnDevOn() {
-    if (devCheckbox.checked()) {
-        development = true;
-        neurons = [];
-        initializeNeurons();
-    }
-    else { development = false; }
 }
 
 function turnNumbersOn() {
