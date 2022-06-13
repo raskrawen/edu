@@ -31,7 +31,7 @@ let speedInitial = 10;
 let data = [];
 let checkbox; let devCheckbox;
 let noise = 1; // factor around 1
-let branching = 20; // decrease for more neurons with 2 or 3 axons.
+let branching = 100; // in/decrease for more neurons with 2 or 3 axons.
 let stimulatingRatio = 5; // 1:num is inhib:stimulating neurons
 let speed = 10;
 let thresholdAvr = 27;
