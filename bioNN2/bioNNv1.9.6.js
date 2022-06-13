@@ -20,7 +20,7 @@ let neurons = [];
 let dyingNeurons = [];
 let points = [];
 let neuronSize = 1;
-let numberOfNeurons = 80; //avr=50
+let numberOfNeurons = 80; //avr
 let actualNumberOfNeurons;
 let sliderSensitivityInitial = 100;
 let sensitivityRatio = 5; //increase for more activity (sensitive nerons etc.)
@@ -29,7 +29,7 @@ let speedInitial = 10;
 let data = [];
 let checkbox; let devCheckbox;
 let noise = 1; // factor around 1
-let branching = 80; // increase for more neurons with 2 or 3 axons.
+let branching = 50; // increase for more neurons with 2 or 3 axons.
 let stimulatingRatio = 3; // 1:stimulatingRatio is ratio inhib:stimulating neurons
 let speed = 10;
 let thresholdAvr = 27;
