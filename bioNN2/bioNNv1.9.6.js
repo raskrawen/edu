@@ -118,10 +118,10 @@ function drawGUI() {
     txt.style('font-size', '18px')
     txt.position(width - 200, height + 10);
     // button:
-    gameButton = createButton('Game');
+    /*gameButton = createButton('Game');
     gameButton.position(distInGUI * 7, height + 5);
     gameButton.mouseClicked(startGame);
-
+    */
 }
 
 
