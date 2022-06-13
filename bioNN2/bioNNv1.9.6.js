@@ -7,14 +7,12 @@ topic: Simulation of neurons network
 version: 1.9.6
 features: 
 - mouseclick for new axon
-- click on sensory neuron for AP.
+- click on sensory neuron for increase MP.
 - ear only (no eye) when 'ear' selected.
 - synapses will grow when used.
 - new axons will grow.
 - danske tekster
 - refractory period
-- game button
-- very few inhib neurons
 */
 
 let cvs;
@@ -31,8 +29,8 @@ let speedInitial = 10;
 let data = [];
 let checkbox; let devCheckbox;
 let noise = 1; // factor around 1
-let branching = 100; // in/decrease for more neurons with 2 or 3 axons.
-let stimulatingRatio = 5; // 1:num is inhib:stimulating neurons
+let branching = 80; // increase for more neurons with 2 or 3 axons.
+let stimulatingRatio = 4; // 1:stimulatingRatio is ratio inhib:stimulating neurons
 let speed = 10;
 let thresholdAvr = 27;
 let mic;
