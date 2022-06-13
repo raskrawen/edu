@@ -605,7 +605,7 @@ class Neuron {
     growNewAxon() {
         //console.log("in growing method");
         // Grow new axon after 50 activations. Max 4 axons:
-        if (this.activations > 50 && this.connectedTo.length < 3 && random(0,11>9)) {
+        if (this.activations > 50 && this.connectedTo.length < 3) {
             console.log("new axon growing");
             let newNeighbor;
             let d_shortest = width;
