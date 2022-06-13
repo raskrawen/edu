@@ -860,7 +860,7 @@ class Neuron {
         if (scaleMP(this.pot) > 40) { this.pot = 100; }
         // all MP's under 10: increase
         if (this.pot <= 10 + noise * random(0, 8)) {
-            this.pot += random(0,2);
+            this.pot += random(0,1);
         }
 
         // synapse length slowly decrease to normal:
@@ -938,7 +938,7 @@ class Neuron {
                 //inhibitory neuron:
                 else {
                     if (neurons[this.connectedTo[j]].pot > 10) {
-                        neurons[this.connectedTo[j]].pot -= 20 + this.preSynLen / 2;
+                        neurons[this.connectedTo[j]].pot -= 20 + this.preSynLen;
                     }
                 }
                 //let post-synapse length grow until 25:
