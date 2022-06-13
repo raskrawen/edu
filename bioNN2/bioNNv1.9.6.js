@@ -30,7 +30,7 @@ let data = [];
 let checkbox; let devCheckbox;
 let noise = 1; // factor around 1
 let branching = 80; // increase for more neurons with 2 or 3 axons.
-let stimulatingRatio = 4; // 1:stimulatingRatio is ratio inhib:stimulating neurons
+let stimulatingRatio = 3; // 1:stimulatingRatio is ratio inhib:stimulating neurons
 let speed = 10;
 let thresholdAvr = 27;
 let mic;
@@ -860,7 +860,7 @@ class Neuron {
         if (scaleMP(this.pot) > 40) { this.pot = 100; }
         // all MP's under 10: increase
         if (this.pot <= 10 + noise * random(0, 8)) {
-            this.pot += noise * random(2, sensitivityRatio) / 2;
+            this.pot += random(0,2);
         }
 
         // synapse length slowly decrease to normal:
@@ -938,10 +938,10 @@ class Neuron {
                 //inhibitory neuron:
                 else {
                     if (neurons[this.connectedTo[j]].pot > 10) {
-                        neurons[this.connectedTo[j]].pot -= 5 + this.preSynLen / 2;
+                        neurons[this.connectedTo[j]].pot -= 20 + this.preSynLen / 2;
                     }
                 }
-                //let post-synapse length grow until 30: CORRECT???
+                //let post-synapse length grow until 25:
                 if (neurons[this.connectedTo[j]].preSynLen < 25) {
                     neurons[this.connectedTo[j]].preSynLen += 0.5;
                 }
