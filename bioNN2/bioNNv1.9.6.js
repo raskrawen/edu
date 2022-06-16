@@ -1,5 +1,5 @@
 /*
-date: april 2022
+date: june 2022
 by: Rasmus Kragh Wendelbo
 using: p5 library by p5js.org
 license: CC-BY-NC 4.0
@@ -7,12 +7,14 @@ topic: Simulation of neurons network
 version: 1.9.6
 features: 
 - mouseclick for new axon
-- click on sensory neuron for increase MP.
+- inhibitory cells are red, stimulating are blue, sensory are yellow
+- click on sensory neuron for AP.
 - ear only (no eye) when 'ear' selected.
 - synapses will grow when used.
 - new axons will grow.
 - danske tekster
 - refractory period
+- cells in refrac period are greyed
 */
 
 let cvs;
@@ -20,22 +22,22 @@ let neurons = [];
 let dyingNeurons = [];
 let points = [];
 let neuronSize = 1;
-let numberOfNeurons = 80; //avr
+let numberOfNeurons = 80; //avr=50
 let actualNumberOfNeurons;
 let sliderSensitivityInitial = 100;
 let sensitivityRatio = 5; //increase for more activity (sensitive nerons etc.)
 let refractPeriod = 5;
+let refracVisibility = 60; //increase for more visible
 let speedInitial = 10;
 let data = [];
 let checkbox; let devCheckbox;
 let noise = 1; // factor around 1
-let branching = 50; // increase for more neurons with 2 or 3 axons.
-let stimulatingRatio = 3; // 1:stimulatingRatio is ratio inhib:stimulating neurons
+let branching = 50; // decrease for more neurons with 2 or 3 axons.
+let stimulatingRatio = 3; // 1:num is inhib:stimulating neurons
 let speed = 10;
 let thresholdAvr = 27;
 let mic;
 let writeNumbers = false;
-console.log(scaleNumber(40));
 let ear = false;
 let paused = false;
 //let refracTime = 0;
@@ -45,7 +47,7 @@ let selLevel = noOptions[3]; // no of neurons at start.
 let clickX; let clickY;
 let infoBox;
 let plot = false;
-let message = "<h1>Model af neuralt netværk.</h1>v.1.9.6. Ses bedst i 100% zoom.<h3>Menneskets krop gennemløbes af mange <i>milliarder nerveceller (neuroner)</i>, som er forbundet i <i>netværk</i>, og signalerer til hinanden. Hver nervecelle består af en cellekrop (soma) og en til flere udløbere (axon'er).<br><br>I modellen har hver nervecelle en rød søjle for cellens <i>membranpotentiale</i> og en grøn søjle for <i>tærskelværdi</i>.<br><img src='neuron.jpg', align='center'><br>Enkelte celler er <I>sanseceller</I> (gullige), som aktiveres af påvirkning fra miljøet fx af berøring eller duft.<br>I modellen aktiveres sansecellerne af og til, men kan også aktiveres af <u>klik med musen</u>.<br><br>Nye axoner kan dannes ved at <u>klikke på to nerveceller</u>, som er nær hinanden.";
+let message = "<h1>Model af biologisk neuralt netværk.</h1><h5>v.1.9.6. Ses bedst i 100% zoom.</h5>Hver nervecelle består af en cellekrop (soma) og en til flere udløbere (axon'er). En nervecelle kan enten være <i>stimulerende</i> (blålige), <i>hæmmende</i> (rødlige) eller en <i>sansecelle</i> (gullige).<br><br>I modellen har hver nervecelle en rød søjle for cellens <i>membranpotentiale</i> og en grøn søjle for <i>tærskelværdi</i>.<br><br><center><img src='neuron.jpg'></center><br>Sanseceller aktiveres af og til, men kan også aktiveres af <u>klik med musen</u>.<br><br>Nye axoner kan bl.a. dannes ved at <u>klikke på to nerveceller</u>, som er nær hinanden.";
 let debugging = false;
 /*debugging mode: inhibitory neurons: small. Normal: green. Senseing: purple */
 //<I>Numre</I> viser <u>tærskelværdi</u> og <u>membranpotentiale</u> (sorte), samt hver nervecelles type og ID (hvid). Typen kan være <I>fremmende</I> (stim) eller <I>hæmmende</I> (inhib).
@@ -64,7 +66,7 @@ function setup() {
 
 function drawGUI() {
     let distInGUI = 100;
-    Numberscheckbox = createCheckbox('Numre', writeNumbers);
+    Numberscheckbox = createCheckbox('Kvantitativ', writeNumbers);
     Numberscheckbox.position(5, height + 5);
     Numberscheckbox.changed(turnNumbersOn);
     devCheckbox = createCheckbox('Sanseindtryk', true);
@@ -119,7 +121,7 @@ function drawGUI() {
     /*gameButton = createButton('Game');
     gameButton.position(distInGUI * 7, height + 5);
     gameButton.mouseClicked(startGame);
-    */
+*/
 }
 
 
@@ -152,7 +154,7 @@ function initializeNeurons() {
 function initializeInfoBox() {
     infoBox = createDiv(message);
     infoBox.style("width: 70%;");
-    infoBox.style("height: 75%;");
+    infoBox.style("height: 80%;");
     infoBox.style("padding: 10px;");
     //infoBox.style("f");
     infoBox.style("background-color: white");
@@ -162,7 +164,7 @@ function initializeInfoBox() {
 
 
 function showNeurons() {
-    background(200);
+    background(230);
     for (let n of neurons) {
         // draw axon:
         n.drawOneNeuron();
@@ -328,22 +330,20 @@ function mouseReleasedInCanvas() {
                 }
                 else { //one neuron already clicked:
                     if (points[0].ID == n.neuronID) { // same Neuron already clicked:
-                        console.log("330");
+                        //console.log("330");
                         n.col = color(25 + random(0, 100), 25 + random(0, 100), 100 + random(0, 155));
                         points = [];
                     }
                     else {
-                        console.log(points); 
+                        //console.log(points); 
                         points.push(new Point(mouseX, mouseY, onNeuron));
-                    points[points.length-1].ID = n.neuronID;
-                        if (dist(points[0].x, points[0].y, points[points.length-1].x, points[points.length-1].y)<200) { //only draw new axon, if short
-                        drawNewAxon(); 
-                        points = [];
+                        points[points.length-1].ID = n.neuronID;
+                        if (dist(points[0].x, points[0].y, points[points.length-1].x, points[points.length-1].y)<200) { //only draw new axon, if distance is short
+                            drawNewAxon(); 
+                            points = [];
                     }
                 }
                 }
-                
-                
                 //recolor rest of neurons in points:
                 }
             }
@@ -444,7 +444,7 @@ function adjustSpeed() {
     speedInitial = sliderSpeed.value();
 }
 function adjustSensitivity() {
-    // sliderSens.value  from 0 to 200. start = 100%, map to 25,35 interval.
+    // sliderSens.value  from 0 to 200. start = 100%, map to 45,15 interval.
     thresholdAvr = map(sliderSensitivity.value(), 0, 200, 45, 15);
     sensitivityRatio = sliderSensitivity.value() / 20; //avr = 5. 100/20=5. 1:5 inhib:stim is nm
     sliderSensitivityInitial = sliderSensitivity.value();
@@ -477,7 +477,7 @@ function scaleNumber(n) { //calculates number from MP for the model
 
 // running tasks ----------------------------------------------------------
 function draw() {
-    background(200);
+    background(180);
     frameRate(sliderSpeed.value());
     //console.log("Actu no of Neurons: " + actualNumberOfNeurons + ". Neurons array length: " + neurons.length);
     // infobox in front or back:
@@ -506,11 +506,15 @@ function draw() {
         n.updateThreshold();
         n.drawThreshold();
         n.drawMembranePotential();
+        //n.updateColor();
         if (devCheckbox.checked()) { n.fireSensoryNeurons(1000 * sensitivityRatio / 5); } //higher = more likely to fire
         if (writeNumbers) {
             n.writeMembraneData();
             n.writeNeuronID();
             n.writeNeuronType();
+        }
+        if ((frameCount - n.refracTime) > 250/sensitivityRatio) {
+            n.inRefractionPeriod = false;
         }
     }
     if (writeNumbers && plot) {
@@ -573,11 +577,12 @@ class Neuron {
         this.pot = 10; //initial membranepotential
         //this.refractPeriod = sensitivityRatio //sensitivityRatio avr 5 on a 0 to 10 scale
         this.refracTime = -1000; //avoids refrac period on start
+        this.inRefractionPeriod = false;
         this.threshold = thresholdAvr + noise * random(-3, 3); //pot must exteed to fire AP
         this.axonAngle = [] // noise * random(0, 360); //0..360
         this.connectedTo = []; //should be an array
         // Stimulating or inhibiting neuron. false = inhibitory
-        let determineStimulating = random(0, stimulatingRatio * 10) * noise;
+        let determineStimulating = random(0, stimulatingRatio * 10); //stimultingRation around 4.
         if (determineStimulating <= 5) { //increase number for more inhibitory cells
             this.stimulating = false; // false = inhibiting
             if (debugging) { this.soma = 25; }
@@ -595,17 +600,24 @@ class Neuron {
             if (debugging) { this.col = color(255, 0, 205); }
         }
         else {
-            // normal cell:
+            // normal stim cell:
             this.sensoryNeuron = false;
-            this.col = color(25 + random(0, 100), 25 + random(0, 100), 100 + random(0, 155));
+            this.col = color(25 + random(0, 50), 25 + random(0, 100), 150 + random(0, 155));
             if (debugging) { this.col = color(0, 255, 0); }
         }
+        //inhibitory cells:
+        if (!this.stimulating) {
+            this.col = this.col = color(100 + random(0, 100), 25 + random(0, 100), 25 + random(0, 100));
+        }
+        this.refracColor = this.col;
+        this.refracColor.setAlpha(5);
     }
 
     growNewAxon() {
-        //console.log("in growing method");
-        // Grow new axon after 50 activations. Max 4 axons:
-        if (this.activations > 50 && this.connectedTo.length < 3) {
+        //sliderSensitivity between 10 and 200, begins at 100
+        // Grow new axon after 10-20 activations. Max 4 axons:
+        //console.log(1000/sliderSensitivity.value());
+        if (this.activations > random(1000/sliderSensitivity.value(),1000/sliderSensitivity.value()+10) && this.connectedTo.length < 4) {
             console.log("new axon growing");
             let newNeighbor;
             let d_shortest = width;
@@ -628,7 +640,7 @@ class Neuron {
                                 }
                             }
                             //console.log(no2to1connection);
-                            if (no2to1connection) { //they are notconnected
+                            if (no2to1connection) { //they are not connected
                                 //calc distance:    
                                 d_new = dist(this.x, this.y, neurons[i].x, neurons[i].y);
                                 // find new shortest distance:
@@ -739,6 +751,10 @@ class Neuron {
         // draw axon:
         let axonColor = this.col;
         axonColor.setAlpha(150);
+        if (this.inRefractionPeriod) {
+            axonColor = this.refracColor;
+            axonColor.setAlpha(refracVisibility);
+        }
         stroke(axonColor);
         strokeWeight(10 * neuronSize);
         // every axon:
@@ -763,7 +779,11 @@ class Neuron {
         noStroke();
         let somaColor = this.col;
         somaColor.setAlpha(255);
-        fill(this.col);
+        if (this.inRefractionPeriod) {
+            somaColor = this.refracColor;
+            somaColor.setAlpha(refracVisibility+50);
+        }
+        fill(somaColor);
         circle(this.x, this.y, this.soma);
     }
 
@@ -849,7 +869,7 @@ class Neuron {
         } else { this.threshold -= 0.01; }
         //absolute limits:
         if (this.threshold > 35) { this.threshold = 35; }
-        if (this.threshold < 25) { this.threshold = 25; }
+        if (this.threshold < 20) { this.threshold = 20; }
         this.threshold = this.threshold + random(-0.1, 0.1) * noise;
     }
 
@@ -858,6 +878,8 @@ class Neuron {
         if (this.pot >= 10) { this.pot -= exp(this.pot/50) + random(-3,3); } //decrease number to decrease pot
         // MP upper limit
         if (scaleMP(this.pot) > 40) { this.pot = 100; }
+        // MP lower limit: 
+        if (scaleMP(this.pot) < -100) { this.pot = -10}
         // all MP's under 10: increase
         if (this.pot <= 10 + noise * random(0, 8)) {
             this.pot += random(0,1);
@@ -890,6 +912,8 @@ class Neuron {
         if ((frameCount - this.refracTime) > 250/sensitivityRatio) {
             // increase activation number:
             this.activations += 1;
+            console.log(this.activations);
+            this.inRefractionPeriod = true;
             // AP:
             this.pot = scaleNumber(40);
             noStroke();
