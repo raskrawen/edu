@@ -22,7 +22,7 @@ let neurons = [];
 let dyingNeurons = [];
 let points = [];
 let neuronSize = 1;
-let numberOfNeurons = 80; //avr=50
+let numberOfNeurons = 60; //avr=50
 let actualNumberOfNeurons;
 let sliderSensitivityInitial = 100;
 let sensitivityRatio = 5; //increase for more activity (sensitive nerons etc.)
@@ -43,7 +43,7 @@ let paused = false;
 //let refracTime = 0;
 let sel;
 let noOptions = ['15', '40', '60', '80'];
-let selLevel = noOptions[3]; // no of neurons at start.
+let selLevel = noOptions[2]; // no of neurons at start.
 let clickX; let clickY;
 let infoBox;
 let plot = false;
