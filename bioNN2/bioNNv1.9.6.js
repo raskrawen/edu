@@ -781,7 +781,7 @@ class Neuron {
         somaColor.setAlpha(255);
         if (this.inRefractionPeriod) {
             somaColor = this.refracColor;
-            somaColor.setAlpha(refracVisibility+50);
+            somaColor.setAlpha(refracVisibility+100);
         }
         fill(somaColor);
         circle(this.x, this.y, this.soma);
