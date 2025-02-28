@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Eksempelside</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #header { background-color: #f4f4f4; padding: 15px; text-align: center; }
+        #content { max-width: 600px; margin: auto; }
+        #intro-text { color: darkblue; font-style: italic; }
+        #profile-pic { width: 100%; max-width: 300px; border-radius: 10px; }
+        #interests-list { list-style-type: square; }
+        #contact-form { background-color: #f8f8f8; padding: 15px; border-radius: 5px; }
+        #footer { margin-top: 20px; text-align: center; padding: 10px; background-color: #ddd; }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header id="header">
+        <h1>Velkommen til min hjemmeside</h1>
+        <p id="intro-text">En simpel HTML-side med de mest almindelige tags.</p>
+    </header>
+
+    <!-- INDHOLD -->
+    <div id="content">
+        <section id="about-section">
+            <h2>Om mig</h2>
+            <p>Mit navn er <strong>Anders</strong>, og jeg elsker at lave hjemmesider.</p>
+            <p>Her er et billede af en flot solnedgang:</p>
+            <img id="profile-pic" src="sunset.jpg" alt="Solnedgang">
+        </section>
+
+        <section id="interests-section">
+            <h2>Mine interesser</h2>
+            <ul id="interests-list">
+                <li>Webudvikling</li>
+                <li>Biologi</li>
+                <li>Rejser</li>
+            </ul>
+        </section>
+
+        <section id="contact-section">
+            <h2>Kontakt mig</h2>
+            <p>Har du spørgsmål? Udfyld formularen herunder:</p>
+            <form id="contact-form">
+                <label for="navn">Navn:</label>
+                <input type="text" id="navn" name="navn" required><br><br>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required><br><br>
+
+                <button id="send-knap" type="button">Send</button>
+            </form>
+        </section>
+    </div>
+
+    <!-- FOOTER -->
+    <footer id="footer">
+        <p>&copy; 2025 Min Eksempelside | <a id="website-link" href="https://example.com">Besøg mig</a></p>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // 1. Ændrer teksten i introen
+        document.getElementById("intro-text").innerText = "Velkommen til min fantastiske hjemmeside!";
+
+        // 2. Ændrer billedet ved hover
+        let pic = document.getElementById("profile-pic");
+        pic.addEventListener("mouseover", function() {
+            pic.src = "new-image.jpg"; // Udskift med et reelt billede
+        });  //kan ændres til billedet 291869.png
+        pic.addEventListener("mouseout", function() {
+            pic.src = "sunset.jpg"; // Skift tilbage til originalbilledet
+        }); 
+
+        // 3. Klik-event på knap
+        document.getElementById("send-knap").addEventListener("click", function() {
+            let name = document.getElementById("navn").value;
+            if (name) {
+                alert("Tak for din besked, " + name + "!");
+            } else {
+                alert("Udfyld venligst dit navn.");
+            }
+        });
+    </script>
+
+</body>
+</html>
