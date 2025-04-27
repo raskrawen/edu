@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Vælg din vej</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('room1.png'); /* Skift evt. billede */
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .button {
+      background-color: yellow;
+      color: black;
+      border: none;
+      padding: 20px 30px;
+      font-size: 1.5rem; 
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px black;
+      transition: transform 0.2s;
+    }
+
+    .button:hover {
+      transform: scale(1.05);   /* Forstør knappen ved hover */
+    }
+
+    .left, .right {
+      margin: 40px;
+    }
+
+    .left {
+      align-self: flex-start;
+    }
+
+    .right {
+      align-self: flex-end; /* Juster til højre */
+    }
+
+    @media (max-width: 600px) { 
+      .button {
+        font-size: 1.2rem;
+        padding: 15px 20px;
+      }
+
+      body {
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .left, .right {
+        margin: 20px;
+        align-self: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="left">
+    <button class="button" id="adminBtn">Administrationen</button>
+  </div>
+
+  <div class="right">
+    <button class="button" id="kantineBtn">Kantinen</button>
+  </div>
+
+  <script>
+    document.getElementById("adminBtn").addEventListener("click", () => {
+      window.location.href = "admin.html";
+    });
+
+    document.getElementById("kantineBtn").addEventListener("click", () => {
+      window.location.href = "kantine.html";
+    });
+  </script>
+</body>
+</html>

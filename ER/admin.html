@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Identificér mikroorganisme</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #1e1e1e;
+      background-image: url('adm.png'); 
+      background-size: cover;
+      background-position: center;
+      font-family: Arial, sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    ul {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 1rem;
+      width: 200px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #b5b834;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    feedback {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hvilken organisme er ansvarlig?</h1>
+    <ul>
+      <li>Smittespredning: <strong>Meget hurtig</strong></li>
+      <li>Ydre membran: <strong>Tilstede</strong></li>
+      <li>Arvemateriale: <strong>RNA</strong></li>
+    </ul>
+
+    <p>Vælg organismetype:</p>
+    <p>1 = Bakterie, 2 = Svamp, 3 = Virus</p>
+
+    <input type="text" id="answer" placeholder="Skriv 1, 2 eller 3">
+    <br>
+    <button onclick="checkAnswer()">Tjek svar</button>
+
+    <p id="feedback"></p>
+  </div>
+
+  <script>
+    function checkAnswer() {
+      const input = document.getElementById("answer").value.trim();
+      const feedback = document.getElementById("feedback");
+
+      if (input === "3") {
+        feedback.textContent = "✔️ Korrekt! Det er en virus.";
+        feedback.style.color = "lightgreen";
+        setTimeout(() => {
+          window.location.href = "lab.html"; // Ret til din næste side
+        }, 3000);
+      } else {
+        feedback.textContent = "❌ Forkert. Prøv igen.";
+        feedback.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>

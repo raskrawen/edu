@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Z-Virus: Udbrud</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('room1.png'); /* Skift evt. billede */
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent sort */
+      padding: 30px;
+      border-radius: 16px;
+      color: white;
+      text-align: center;
+      max-width: 700px;
+      font-family: Arial, sans-serif;
+      font-size: 1.2rem;
+      line-height: 1.5;
+      box-shadow: 0 0 20px black;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #ff4444;
+    }
+
+    @media (max-width: 600px) {
+      .overlay {
+        font-size: 1rem;
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body onclick="goToNextPage()">
+  <div class="overlay">
+    <h1>Z-VIRUS: Udbrud på Svendborg Gymnasium</h1>
+    <p>
+      En ukendt virus har ramt skolen. Den spreder sig fra læreværelset og inficerer celler til at danne proteinet <strong>Synaptoxin</strong> – der forvandler mennesker til zombier.<br><br>
+      Skolen er i karantæne. Jeres tid er knap. Find det muterede gen og stop udbruddet før alle smittes.<br><br>
+      <em>Klik hvor som helst for at begynde...</em>
+    </p>
+  </div>
+
+  <script>
+    function goToNextPage() {
+      window.location.href = "side2.html";
+    }
+  </script>
+</body>
+</html>

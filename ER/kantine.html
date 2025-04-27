@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Genetisk Dekodning</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('kantine.png'); 
+      background-size: contain;
+      background-position: center;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      text-align: center;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.75);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      font-family: monospace;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 1.2rem;
+      width: 80%;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #b5b834;
+      color: black;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    feedback {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Genetisk undersøgelse</h1>
+    <p>I står i kantinen og finder en virus DNA-sekvens. Jeres opgave er at omskrive den til aminosyrer.</p>
+    <p><strong>DNA (skabelonstreng):</strong><br>3'-TAC AAG TTT GGG GTC AGT GCT TGG ACT-5'</p>
+
+    <input type="text" id="answer" placeholder="Indtast aminosyrer (f.eks. MGAMK..)" autofocus>
+    <br>
+    <button onclick="checkAnswer()">Tjek svar</button>
+
+    <p id="feedback"></p>
+  </div>
+
+  <script>
+    function checkAnswer() {
+      var input = document.getElementById("answer").value.trim().toUpperCase();
+      var correct = "MFKPQSRT"; // korrekt sekvens
+      var feedback = document.getElementById("feedback");
+
+      if (input === correct || input === "RASMUS") { // Rasmus er også korrekt
+        feedback.textContent = "✔️ Korrekt! Du kan nu fortsætte.";
+        feedback.style.color = "lightgreen";
+        setTimeout(() => {
+          window.location.href = "lab.html"; // ret til din næste side
+        }, 3000);
+      } else {
+        feedback.textContent = "Forkert. Prøv igen.";
+        feedback.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>
