@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Laboratoriet – Behandling</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('img/sb4.jpg'); 
+      background-size: cover;
+      background-position: center;
+      background-color: #111;
+      font-family: Arial, sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+
+    button {
+        display: flex;
+        flex-wrap: wrap;            /* tillad linjeskift */
+        justify-content: center;    /* centrer indholdet */
+        gap: 15px;                  /* mellemrum mellem knapper */
+        margin: 20px 0;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    feedback {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Vælg den rigtige behandling</h1>
+    <p>Hvilken type medicin skal afprøves mod Z-Virus?</p>
+
+    <div class="buttons">
+      <button>Antibiotika</button>
+      <button>Antiviral medicin</button>
+      <button>Pesticid</button>
+      <button>Urte-te</button>
+    </div>
+
+    <p id="feedback"></p>
+  </div>
+
+  <script>
+      var maxTries = 2; // Maksimalt antal forsøg
+      var tries = 0; // Antal forsøg
+
+      function checkTreatment(choice) {
+        const feedback = document.getElementById("feedback");
+
+        if (choice === "antiviral") {
+          feedback.textContent = "✔️ Korrekt! Antiviral medicin er den rette behandling mod virus.";
+          feedback.style.color = "lightgreen";
+          setTimeout(() => {
+            window.location.href = "good_ending.html";
+          }, 3000);
+        } else {
+          tries = tries +1; // Øg antallet af forsøg
+          feedback.textContent = "❌ Forkert behandling. Prøv igen.";
+          feedback.style.color = "red";
+
+          if (tries >= maxTries) {
+            setTimeout(() => {
+              window.location.href = "bad_ending.html";
+            }, 3000);
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const buttons = document.querySelectorAll(".buttons button");
+
+        buttons.forEach(button => {
+          button.addEventListener("click", () => {
+            const choice = button.textContent.toLowerCase();
+            checkTreatment(choice);
+          });
+        });
+      });
+    </script>
+</body>
+</html>
