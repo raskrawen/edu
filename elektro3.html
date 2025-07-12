@@ -3,27 +3,138 @@
 
 <head>
     <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 32px 24px 32px;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3a4a;
+            margin-bottom: 0.5em;
+        }
+        h3 {
+            color: #2d3a4a;
+            font-weight: 400;
+            margin-top: 0;
+            margin-bottom: 1.5em;
+            line-height: 1.6;
+        }
         #input-table {
-            width: 400px !important;
-            min-width: 400px;
-            max-width: 400px;
-            box-sizing: border-box;
+            width: 400px;
+            margin: 0 0 32px 0;
             border-collapse: collapse;
+            background: #f9fafb;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         #input-table th, #input-table td {
             box-sizing: border-box;
-            padding: 4px;
+            padding: 10px 6px;
+            text-align: center;
+            border: 1px solid #e0e4ea;
         }
-
+        #input-table th {
+            background: #eaf1fb;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        #input-table th span {
+            font-weight: 700;
+        }
+        #input-table th:nth-child(2) span { color: #d32f2f; }
+        #input-table th:nth-child(3) span { color: #1976d2; }
+        #input-table th:nth-child(4) span { color: #388e3c; }
         #input-table td:first-child, #input-table th:first-child {
-            width: 70px;
-            min-width: 70px;
-            max-width: 70px;
+            width: 90px;
+            min-width: 90px;
+            max-width: 90px;
+            background: #f3f6f9;
+            font-weight: 500;
         }
-
         #input-table input[type="text"] {
-            width: 30px;
-            box-sizing: border-box;
+            width: 38px;
+            padding: 4px 2px;
+            margin: 0 2px;
+            border: 1px solid #bfc9d1;
+            border-radius: 4px;
+            font-size: 1em;
+            text-align: center;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+        #input-table input[type="text"]:focus {
+            border-color: #1976d2;
+            outline: none;
+        }
+        .main-flex {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 24px;
+        }
+        .canvas-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .button-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-left: 24px;
+            margin-top: 20px;
+        }
+        .gel-btn {
+            font-size: 1.1em;
+            padding: 12px 0;
+            width: 160px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #1976d2 60%, #42a5f5 100%);
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .gel-btn:hover {
+            background: linear-gradient(90deg, #1565c0 60%, #1976d2 100%);
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+        }
+        .plus-pol {
+            text-align: left;
+            margin-top: 18px;
+            color: #1976d2;
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            user-select: none;
+        }
+        @media (max-width: 900px) {
+            .container { padding: 12px 2vw; }
+            .main-flex { flex-direction: column; align-items: center; gap: 0; }
+            .button-col { margin-left: 0; margin-top: 18px; align-items: center; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
@@ -251,44 +362,52 @@
     </script>
 </head>
 
+
 <body>
-
-    <h3>
-        1. I finder DNA fra hver af tre mistænkte personer efter nærmere anvisninger.<br>
-         <br>
-        DNA fra de tre mistænkte personer opformeres og behandles med et <i>enzym</i>, som klipper DNA-sekvenser midt i "aggcct". De DNA stykker, som fremkommer kaldes <i>fragmenter.</i><br><br>
-        2. Find alle "aggcct" i DNA-sekvenserne, og tæl længden af de DNA-fragmenter, som fremkommer ved klipning.<br>
-        3. Indtast længderne af DNA-fragmenterne under hver mistænkt herunder.<br>
-        4. Klik på "Tænd strøm" for at starte <i>gel-elektroforese</i>.<br>
-        
-    </h3>
-    <table id="input-table" border="1" style="width:400px; border-collapse: collapse;">
-        <tr>
-            <th>Offer</th>
-            <th><span style="color: red;">Person 2</span></th>
-            <th><span style="color: blue;">Person 3</span></th>
-            <th><span style="color: green;">Person 4</span></th>
-        </tr>
-        <tr>
-            <td></td>
-            <td>
-                <input id="person2_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input1')">
-                <input id="person2_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input2')">
-                <input id="person2_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input3')">
-            </td>
-            <td>
-                <input id="person3_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input1')">
-                <input id="person3_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input2')">
-                <input id="person3_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input3')">
-            </td>
-            <td>
-                <input id="person4_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input1')">
-                <input id="person4_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input2')">
-                <input id="person4_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input3')">
-            </td>
-        </tr>
-    </table>
-
+    <div class="container">
+        <h1>Gel-elektroforese</h1>
+        <h3>
+            1. I finder DNA fra hver af tre mistænkte personer efter nærmere anvisninger.<br>
+            <br>
+            DNA fra de tre mistænkte personer opformeres og behandles med et <i>enzym</i>, som klipper DNA-sekvenser midt i "aggcct". De DNA stykker, som fremkommer kaldes <i>fragmenter.</i><br><br>
+            2. Find alle "aggcct" i DNA-sekvenserne, og tæl længden af de DNA-fragmenter, som fremkommer ved klipning.<br>
+            3. Indtast længderne af DNA-fragmenterne under hver mistænkt herunder.<br>
+            4. Klik på <b>"Tænd strøm"</b> for at starte <i>gel-elektroforese</i>.<br>
+        </h3>
+        <table id="input-table" border="1">
+            <tr>
+                <th>Offer</th>
+                <th><span>Person 2</span></th>
+                <th><span>Person 3</span></th>
+                <th><span>Person 4</span></th>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <div class="input-group">
+                        <input id="person2_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input1')">
+                        <input id="person2_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input2')">
+                        <input id="person2_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input3')">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <input id="person3_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input1')">
+                        <input id="person3_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input2')">
+                        <input id="person3_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input3')">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <input id="person4_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input1')">
+                        <input id="person4_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input2')">
+                        <input id="person4_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input3')">
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <!-- Canvas, buttons, and + pol will be injected here by p5.js setup() -->
+    </div>
 
     <script>
     // Clear all input fields on page load
