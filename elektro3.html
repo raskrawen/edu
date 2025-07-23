@@ -351,7 +351,7 @@
             show() {
                 stroke(this.col);
                 strokeWeight(2);
-                if ( len > 6 ) // små fragmenter bliver ikke vist.
+                if ( this.len > 2 ) // små fragmenter bliver ikke vist.
                 {
                 line(this.x + random(1, 5), this.y + random(1, 10), this.x + this.len + random(1, 5), this.y + random(1, 10));
                 }
