@@ -1,1 +1,25 @@
+atom 	En partikel, som er den mindste del af et grundstof
+atom-modellen	model med kerne af protoner og neutroner, og elektroner omkring kernen
+proton	Partikel med positivt ladning i kernen
+neutron 	Partikel med neutral ladning i kernen
+elektron	Paritikel med negativ elektrisk ladning
+elementar-ladning	Ladningen af en proton eller elektron
+atom-nummer	Antal protoner i kernen
+unit (u)	det massen (vægten) af atomer bliver målt i
+nukleon-tal	Antal protoner og neutroner tilsammen
+isotoper	atomer med samme atomnummer, men forskellige antal neutroner
+atom-masse	Atomets vægt mål i unit
+skal-modellen	viser at elektronerne er fordelt i skaller omkring kernen
+elektron-sky	model der viser hvor elektroner opholder sig mest
+elementar-partikler	protoner, neutroner og elektroner
+grupper	søjler i det periodiske system. Viser noget om elektroner i yderste skal
+hovedgrupper  gruppe 1,2 og 13 til 18.
+halogener  gruppe 17 (F, Cl, Br, I m.fl.)
+ædelgasser  gruppe 18 (He, Ne, Ar, Kr, Xe, Ra)
+perioder	rækker i det periodiske system. Viser antallet af skaller
+det periodiske system	oversigt over de kendte grundstoffer
+undergrupper	gruppe 3 til 12, som alle indeholder metaller
+metaller	blanke, leder strøm og varme. Danner positive ioner
+ikke-metaller	leder ikke strøm og varme, mange er gasser ved stuetemperatur. Danner negative ioner
+halv-metaller	grundstofferne der står omkring trappen mellem metaller og ikke-metaller
 
