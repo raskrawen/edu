@@ -1,3 +1,4 @@
+Emne: ATOMER og IONER
 atom 	En partikel, som er den mindste del af et grundstof
 atom-modellen	model med kerne af protoner og neutroner, og elektroner omkring kernen
 proton	Partikel med positivt ladning i kernen
