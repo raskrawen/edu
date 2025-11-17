@@ -1,0 +1,22 @@
+[
+  {"Grundstofnavn": "Hydrogen", "Grundstofsymbol": "H", "Grundstofnummer": 1},
+  {"Grundstofnavn": "Helium", "Grundstofsymbol": "He", "Grundstofnummer": 2},
+  {"Grundstofnavn": "Lithium", "Grundstofsymbol": "Li", "Grundstofnummer": 3},
+  {"Grundstofnavn": "Beryllium", "Grundstofsymbol": "Be", "Grundstofnummer": 4},
+  {"Grundstofnavn": "Bor", "Grundstofsymbol": "B", "Grundstofnummer": 5},
+  {"Grundstofnavn": "Carbon", "Grundstofsymbol": "C", "Grundstofnummer": 6},
+  {"Grundstofnavn": "Nitrogen", "Grundstofsymbol": "N", "Grundstofnummer": 7},
+  {"Grundstofnavn": "Oxygen", "Grundstofsymbol": "O", "Grundstofnummer": 8},
+  {"Grundstofnavn": "Fluor", "Grundstofsymbol": "F", "Grundstofnummer": 9},
+  {"Grundstofnavn": "Neon", "Grundstofsymbol": "Ne", "Grundstofnummer": 10},
+  {"Grundstofnavn": "Natrium", "Grundstofsymbol": "Na", "Grundstofnummer": 11},
+  {"Grundstofnavn": "Magnesium", "Grundstofsymbol": "Mg", "Grundstofnummer": 12},
+  {"Grundstofnavn": "Aluminium", "Grundstofsymbol": "Al", "Grundstofnummer": 13},
+  {"Grundstofnavn": "Silicium", "Grundstofsymbol": "Si", "Grundstofnummer": 14},
+  {"Grundstofnavn": "Fosfor", "Grundstofsymbol": "P", "Grundstofnummer": 15},
+  {"Grundstofnavn": "Svovl", "Grundstofsymbol": "S", "Grundstofnummer": 16},
+  {"Grundstofnavn": "Chlor", "Grundstofsymbol": "Cl", "Grundstofnummer": 17},
+  {"Grundstofnavn": "Argon", "Grundstofsymbol": "Ar", "Grundstofnummer": 18},
+  {"Grundstofnavn": "Kalium", "Grundstofsymbol": "K", "Grundstofnummer": 19},
+  {"Grundstofnavn": "Calcium", "Grundstofsymbol": "Ca", "Grundstofnummer": 20}
+]
