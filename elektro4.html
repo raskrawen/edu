@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 32px 24px 32px;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3a4a;
+            margin-bottom: 0.5em;
+        }
+        h3 {
+            color: #2d3a4a;
+            font-weight: 400;
+            margin-top: 0;
+            margin-bottom: 1.5em;
+            line-height: 1.6;
+        }
+        #input-table {
+            width: 560px;
+            margin: 0 0 32px 0;
+            border-collapse: collapse;
+            background: #f9fafb;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        #input-table th, #input-table td {
+            box-sizing: border-box;
+            padding: 10px 6px;
+            text-align: center;
+            border: 1px solid #e0e4ea;
+        }
+        #input-table th {
+            background: #eaf1fb;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        #input-table th span {
+            font-weight: 700;
+        }
+        #input-table th:nth-child(2) span { color: #d32f2f; }
+        #input-table th:nth-child(3) span { color: #1976d2; }
+        #input-table th:nth-child(4) span { color: #388e3c; }
+        #input-table th:nth-child(5) span { color: #ef6c00; }
+        #input-table td:first-child, #input-table th:first-child {
+            width: 160px;
+            min-width: 160px;
+            max-width: 160px;
+            background: #f3f6f9;
+            font-weight: 500;
+        }
+        #input-table input[type="text"] {
+            width: 38px;
+            padding: 4px 2px;
+            margin: 0 2px;
+            border: 1px solid #bfc9d1;
+            border-radius: 4px;
+            font-size: 1em;
+            text-align: center;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+        #input-table input[type="text"]:focus {
+            border-color: #1976d2;
+            outline: none;
+        }
+        .main-flex {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 24px;
+        }
+        .canvas-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .button-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-left: 24px;
+            margin-top: 20px;
+        }
+        .gel-btn {
+            font-size: 1.1em;
+            padding: 12px 0;
+            width: 160px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #1976d2 60%, #42a5f5 100%);
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .gel-btn:hover {
+            background: linear-gradient(90deg, #1565c0 60%, #1976d2 100%);
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+        }
+        .plus-pol {
+            width: 500px;
+            text-align: center;
+            margin-top: 18px;
+            color: #000000;
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            user-select: none;
+        }
+        @media (max-width: 900px) {
+            .container { padding: 12px 2vw; }
+            .main-flex { flex-direction: column; align-items: center; gap: 0; }
+            .button-col { margin-left: 0; margin-top: 18px; align-items: center; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/addons/p5.sound.min.js"></script>
+
+    <meta charset="utf-8" />
+
+    <script>
+        var fragment1 = [];
+        var fragment2 = [];
+        var fragment3 = [];
+        var fragments = [];
+        var wellx = 50;
+        var well2x = 140;
+        var well3x = 230;
+        var well4x = 320;
+        var well5x = 410;
+
+        var isElectrophoresisRunning = false;
+        var hasStartedElectrophoresis = false;
+        function setup() {
+            noLoop();
+            // Create a flex row for canvas and button
+            let rowWrapper = createDiv();
+            rowWrapper.id('row-wrapper');
+            rowWrapper.style('display', 'flex');
+            rowWrapper.style('flex-direction', 'row');
+            rowWrapper.style('align-items', 'flex-start');
+            // Create canvas and parent it to row
+            let canvas = createCanvas(500, 400);
+            canvas.parent(rowWrapper);
+            background(200, 200, 200);
+
+            // Create a column for the buttons
+            let buttonCol = createDiv();
+            buttonCol.style('display', 'flex');
+            buttonCol.style('flex-direction', 'column');
+            buttonCol.style('align-items', 'flex-end');
+            buttonCol.style('margin-left', '20px');
+
+            // Create button and parent it to buttonCol
+            button = createButton('Tænd strøm');
+            button.parent(buttonCol);
+            button.style('font-size', '14px');
+            button.style('padding', '8px 40px');
+            button.style('width', '140px');
+            button.mousePressed(toggleElectrophoresis);
+
+            // Add a new button below the old button
+            let resetButton = createButton('Nulstil gel');
+            resetButton.parent(buttonCol);
+            resetButton.style('font-size', '14px');
+            resetButton.style('padding', '8px 40px');
+            resetButton.style('width', '140px');
+            resetButton.style('margin-top', '10px');
+            resetButton.mousePressed(function() {
+                initializeGel();
+                isElectrophoresisRunning = false;
+                hasStartedElectrophoresis = false;
+                button.html('Tænd strøm');
+            });
+
+            // Add canvas and buttonCol to row
+            canvas.parent(rowWrapper);
+            buttonCol.parent(rowWrapper);
+
+            // Add the row below the table
+            let tableElem = select('#input-table');
+            if (tableElem) {
+                rowWrapper.parent(tableElem.elt.parentNode);
+                tableElem.elt.parentNode.insertBefore(rowWrapper.elt, tableElem.elt.nextSibling);
+
+                // Add a large plus sign after the rowWrapper
+                let plusDiv = document.createElement('div');
+                plusDiv.className = 'plus-pol';
+                plusDiv.textContent = '+ pol';
+                rowWrapper.elt.parentNode.insertBefore(plusDiv, rowWrapper.elt.nextSibling);
+            }
+        }
+
+        function toggleElectrophoresis() {
+            if (!isElectrophoresisRunning) {
+                if (!hasStartedElectrophoresis) {
+                    startElectrophoresis();
+                    hasStartedElectrophoresis = true;
+                } else {
+                    loop();
+                }
+                button.html('Sluk strøm');
+                isElectrophoresisRunning = true;
+            } else {
+                noLoop();
+                button.html('Tænd strøm');
+                isElectrophoresisRunning = false;
+            }
+        }
+
+        function initializeGel() {
+            background(200, 200, 200);
+            fill(190);
+            stroke(127);
+            rect(35, 45, 65, 25);
+            rect(120, 45, 65, 25);
+            rect(210, 45, 65, 25);
+            rect(300, 45, 65, 25);
+            rect(390, 45, 65, 25);
+            fragments = []; // Clear previous fragments
+        }
+
+        function startElectrophoresis() {
+            initializeGel(); // Initialize the gel setup
+            var victimFragments = [ 129, 146, 25];
+            for (i = 0; i < 5; i++) {
+                fragment1[i] = new Strand(wellx, 50, victimFragments[0], 'BLACK');
+                fragment2[i] = new Strand(wellx, 50, victimFragments[1], 'BLACK');
+                fragment3[i] = new Strand(wellx, 50, victimFragments[2], 'BLACK');
+            }
+            var number = 0;
+            var inputValue = 0;
+            var maxLength = 200; // Maximum length for input validation
+            var numberOfDNA = 10;
+            function getInputValue(id) {
+                return parseInt(document.getElementById(id).value, 10) || 0;
+            }
+            // lane 2: Mistænkt 1
+            inputValue = getInputValue('person2_input1');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well2x, 50, inputValue, 'RED'); }
+            }
+            inputValue = getInputValue('person2_input2');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well2x, 50, inputValue, 'RED'); }
+            }
+            inputValue = getInputValue('person2_input3');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well2x, 50, inputValue, 'RED'); }
+            }
+            // lane 3: Mistænkt 2
+            inputValue = getInputValue('person3_input1');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well3x, 50, inputValue, 'BLUE'); }
+            }
+            inputValue = getInputValue('person3_input2');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well3x, 50, inputValue, 'BLUE'); }
+            }
+            inputValue = getInputValue('person3_input3');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well3x, 50, inputValue, 'BLUE'); }
+            }
+            // lane 4: Mistænkt 3
+            inputValue = getInputValue('person4_input1');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well4x, 50, inputValue, 'GREEN'); }
+            }
+            inputValue = getInputValue('person4_input2');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well4x, 50, inputValue, 'GREEN'); }
+            }
+            inputValue = getInputValue('person4_input3');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well4x, 50, inputValue, 'GREEN'); }
+            }
+            // lane 5: Mistænkt 4
+            inputValue = getInputValue('person5_input1');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well5x, 50, inputValue, 'ORANGE'); }
+            }
+            inputValue = getInputValue('person5_input2');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well5x, 50, inputValue, 'ORANGE'); }
+            }
+            inputValue = getInputValue('person5_input3');
+            if (inputValue != 0 && inputValue < maxLength) {
+                number = fragments.length;
+                for (var i = number; i < number + numberOfDNA; i++) { fragments[i] = new Strand(well5x, 50, inputValue, 'ORANGE'); }
+            }
+            loop(); // run gel electrophoresis
+        }
+
+
+        function draw() {
+            background(200, 200, 200);
+            fill(190);
+            stroke(127);
+            rect(35, 45, 65, 25);
+            rect(120, 45, 65, 25);
+            rect(210, 45, 65, 25);
+            rect(300, 45, 65, 25);
+            rect(390, 45, 65, 25);
+            for (i = 0; i < fragment1.length; i++) {
+                fragment1[i].move();
+                fragment1[i].show();
+                fragment2[i].move();
+                fragment2[i].show();
+                fragment3[i].move();
+                fragment3[i].show();
+            }
+            for (let fragment of fragments) {
+                fragment.move();
+                fragment.show();
+            }
+        }
+
+        class Strand {
+            constructor(x, y, len, col) {
+                const reductionFactor = 3;
+                this.x = x - len / (2 * reductionFactor) + random(1, 20);
+                this.y = y;
+                this.len = len / reductionFactor;
+                this.col = col;
+
+            }
+
+
+            move() {
+                const gelSpeed = 0.4; // Speed of movement in the gel
+                const gelSeparation = 2; // Separation factor for gel
+                this.y = this.y + gelSpeed / log(this.len / gelSeparation); //
+            }
+
+            show() {
+                stroke(this.col);
+                strokeWeight(2);
+                if (this.len > 2) // små fragmenter bliver ikke vist.
+                {
+                    line(this.x + random(1, 5), this.y + random(1, 10), this.x + this.len + random(1, 5), this.y + random(1, 10));
+                }
+            }
+        }
+
+        console.log('Page loaded and ready.');
+    </script>
+</head>
+
+
+<body>
+    <div class="container">
+        <h1>Gel-elektroforese</h1>
+        <h3>
+            1. I finder DNA fra gerningsstedet og fra hver af de mistænkte personer efter nærmere anvisninger.<br>
+            <br>
+            DNA'et kopieres og behandles med et <i>enzym</i>, som klipper DNA-sekvenser midt i "aggcct". De kortere DNA stykker, som fremkommer efter klipning, kaldes <i>fragmenter.</i><br><br>
+            2. Find <u>alle</u> "aggcct" i DNA-sekvenserne, og klip mellem agg og cct.<br>
+            3. Tæl længden af de DNA-fragmenter, som fremkommer efter klipning.<br>
+            3. Indtast længderne af DNA-fragmenterne under hver mistænkt herunder.<br>
+            4. Klik på <b>"Tænd strøm"</b> for at starte <i>gel-elektroforese</i>.<br>
+            5. Sluk strømmen og sammenlign mønsteret fra mistænkt 1, 2, 3 og 4 med mønsteret fra Gerningsstedet. Hvem ser skyldig ud?<br>
+            6. Tag billeder, der dokumenterer jeres resultater.<br>
+            7. Forklar hvorfor nogle DNA fragmenter vandrer længere end andre.
+        </h3>
+        <table id="input-table" border="1">
+            <tr>
+                <th><b>Gerningssted</b></th>
+                <th><span>Mistænkt 1</span></th>
+                <th><span>Mistænkt 2</span></th>
+                <th><span>Mistænkt 3</span></th>
+                <th><span>Mistænkt 4</span></th>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <div class="input-group">
+                        <input id="person2_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input1')">
+                        <input id="person2_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input2')">
+                        <input id="person2_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person2_input3')">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <input id="person3_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input1')">
+                        <input id="person3_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input2')">
+                        <input id="person3_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person3_input3')">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <input id="person4_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input1')">
+                        <input id="person4_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input2')">
+                        <input id="person4_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person4_input3')">
+                    </div>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <input id="person5_input1" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person5_input1')">
+                        <input id="person5_input2" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person5_input2')">
+                        <input id="person5_input3" type="text" maxlength="3" oninput="enforceTwoDigitInt(this); handleInput('person5_input3')">
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <!-- Canvas, buttons, and + pol will be injected here by p5.js setup() -->
+    </div>
+
+    <script>
+        // Clear all input fields on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            for (let i = 2; i <= 5; i++) {
+                for (let j = 1; j <= 3; j++) {
+                    let inp = document.getElementById(`person${i}_input${j}`);
+                    if (inp) inp.value = '';
+                }
+            }
+        });
+
+        function enforceTwoDigitInt(input) {
+            // Only allow up to three digits, clear if not
+            const val = input.value;
+            if (!/^\d{1,3}$/.test(val)) {
+                input.value = '';
+                return;
+            }
+            if (parseInt(val, 10) >= 200) {
+                input.value = '';
+            }
+        }
+
+        // Prevent oninput ReferenceError from blocking UI handlers.
+        function handleInput() {
+            return;
+        }
+    </script>
+</body>
+
+<script>
+    // Placeholder for any additional JavaScript functionality
+
+</script>
+
+</html>
