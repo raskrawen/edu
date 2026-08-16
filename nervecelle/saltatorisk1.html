@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Saltatorisk ledning i et myeliniseret axon</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --panel:#ffffff;
+    --text:#172033;
+    --muted:#667085;
+    --line:#d0d5dd;
+    --axon:#d9e7ff;
+    --trigger:#ffe8a3;
+    --accent:#3459e6;
+    --grid:#e9edf4;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{
+    width:100vw;
+    height:100vh;
+    display:grid;
+    grid-template-columns:minmax(280px,1fr) minmax(0,2fr);
+    gap:14px;
+    padding:14px;
+  }
+  .leftcol,.rightcol{min-width:0;min-height:0}
+  .leftcol{display:flex;flex-direction:column;gap:12px}
+  .intro,.panel{
+    background:var(--panel);
+    border:1px solid #e4e7ec;
+    border-radius:16px;
+    box-shadow:0 6px 18px rgba(16,24,40,.06);
+    padding:16px 18px;
+  }
+  h1{font-size:clamp(1.3rem,1.9vw,1.9rem);margin:0 0 8px;line-height:1.1}
+  .subtitle{color:var(--muted);margin:0;line-height:1.42;font-size:.95rem}
+  .controlpanel{display:flex;flex-direction:column;gap:12px}
+  .controls{display:flex;flex-direction:column;gap:10px}
+  button{
+    appearance:none;border:none;border-radius:10px;padding:11px 14px;
+    font-size:.98rem;font-weight:650;cursor:pointer;width:100%;
+  }
+  #stimBtn{background:#3459e6;color:#fff}
+  #pauseBtn{background:#eef2ff;color:#233876}
+  #resetBtn{background:#f2f4f7;color:#344054}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .hint{
+    padding:11px 12px;border-radius:10px;background:#f8fafc;
+    border-left:4px solid #98a2b3;color:#344054;line-height:1.4;font-size:.93rem;
+  }
+  .small{font-size:.88rem;color:var(--muted);line-height:1.42;margin:0}
+  .rightcol{display:flex}
+  .sim-wrap{flex:1;min-height:0;display:flex;padding:12px;overflow:hidden}
+  .diagram{
+    width:100%;min-width:0;min-height:0;display:grid;
+    grid-template-rows:minmax(0,2fr) minmax(150px,1fr);gap:6px;
+  }
+  canvas{width:100%;height:100%;display:block;border-radius:12px}
+  #graph{background:#fff;min-height:0}
+  #axon{background:#fbfcfe;min-height:0}
+  @media (max-width:900px){
+    html,body{overflow:auto}
+    .wrap{height:auto;min-height:100vh;grid-template-columns:1fr}
+    .rightcol{min-height:620px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="leftcol">
+    <section class="intro">
+      <h1>Saltatorisk ledning i et myeliniseret axon</h1>
+      <p class="subtitle">
+        Klik hurtigt flere gange på <strong>Tilføj Na+ i triggerområdet</strong>. Hvert klik depolariserer triggerområdet lidt. Når tærskelværdien på −50 mV nås, udløses et aktionspotentiale, som <strong>springer fra node til node</strong> mellem tre myelinskeder.
+      </p>
+    </section>
+
+    <section class="panel controlpanel">
+      <div class="controls">
+        <button id="stimBtn">Tilføj Na+ i triggerområdet</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBtn">Nulstil</button>
+      </div>
+      <div class="hint" id="hint">Prøv at klikke langsomt først. Membranpotentialet falder tilbage mod −70 mV mellem stimulationerne.</div>
+      <p class="small">
+        Grafens x-akse viser <strong>placering langs axonet</strong>. De grå områder viser <strong>myelinskeder</strong>. Kurven vises kun i de små områder mellem myelinskederne, hvor spændingsændringerne sker.
+      </p>
+    </section>
+  </aside>
+
+  <main class="rightcol">
+    <section class="panel sim-wrap">
+      <div class="diagram">
+        <canvas id="graph" width="1100" height="360" aria-label="Graf over membranpotentiale langs et myeliniseret axon"></canvas>
+        <canvas id="axon" width="1100" height="180" aria-label="Myeliniseret axon med saltatorisk ledning"></canvas>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const graph = document.getElementById('graph');
+  const axon = document.getElementById('axon');
+  const g = graph.getContext('2d');
+  const a = axon.getContext('2d');
+  const stimBtn = document.getElementById('stimBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const hintEl = document.getElementById('hint');
+
+  const REST = -70;
+  const THRESHOLD = -50;
+  const PEAK = 30;
+  const HYPER = -90;
+  const N = 220;
+  const triggerIndex = 12;
+
+  const nodeRegions = [
+    {start:0, end:33},
+    {start:73, end:98},
+    {start:138, end:163},
+    {start:203, end:219}
+  ];
+  const myelinSegments = [
+    {start:34, end:72, label:'Myelinskede 1'},
+    {start:99, end:137, label:'Myelinskede 2'},
+    {start:164, end:202, label:'Myelinskede 3'}
+  ];
+
+  const nodeCenters = nodeRegions.map(r => (r.start + r.end) / 2);
+
+  let potentials = new Array(N).fill(REST);
+  let triggerPotential = REST;
+  let paused = false;
+  let lastTime = performance.now();
+  let apActive = false;
+  let apElapsed = 0;
+  let lastStimTime = 0;
+  let stimCountBurst = 0;
+
+  let restNoise = new Array(N).fill(0);
+  let noiseTargets = new Array(N).fill(0);
+  let noiseTimer = 0;
+
+  const decayRate = 9.5;
+  const stimulusStep = 4.2;
+  const hopInterval = 0.62;
+  const pulseDuration = 1.18;
+
+  function resizeCanvas(canvas, ctx) {
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * ratio);
+    canvas.height = Math.round(rect.height * ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+  }
+
+  function resizeAll(){
+    resizeCanvas(graph,g);
+    resizeCanvas(axon,a);
+  }
+  window.addEventListener('resize', resizeAll);
+
+  function isMyelin(i){
+    return myelinSegments.some(s => i >= s.start && i <= s.end);
+  }
+
+  function clamp(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function temporalDelta(localT){
+    const peak = 104 * Math.exp(-0.5 * Math.pow((localT - 0.18) / 0.075, 2));
+    const dip = 20 * Math.exp(-0.5 * Math.pow((localT - 0.42) / 0.10, 2));
+    return peak - dip;
+  }
+
+  function update(dt){
+    if (paused) return;
+
+    noiseTimer += dt;
+    if (noiseTimer >= 0.12) {
+      noiseTimer = 0;
+      for (let i = 0; i < N; i++) noiseTargets[i] = (Math.random() * 2) - 1;
+    }
+    for (let i = 0; i < N; i++) {
+      restNoise[i] += (noiseTargets[i] - restNoise[i]) * Math.min(1, dt * 7);
+    }
+
+    potentials.fill(REST);
+
+    if (!apActive) {
+      if (triggerPotential > REST) {
+        triggerPotential = Math.max(REST, triggerPotential - decayRate * dt);
+      }
+      potentials[triggerIndex] = triggerPotential;
+
+      if (triggerPotential >= THRESHOLD) {
+        triggerPotential = THRESHOLD;
+        apActive = true;
+        apElapsed = 0;
+        hintEl.textContent = 'Tærsklen er nået. Aktionspotentialet springer nu fra node til node mellem myelinskederne.';
+      }
+    } else {
+      apElapsed += dt;
+
+      nodeRegions.forEach((region, nodeIdx) => {
+        const localT = apElapsed - nodeIdx * hopInterval;
+        if (localT < 0 || localT > pulseDuration) return;
+
+        const delta = temporalDelta(localT);
+        const center = nodeCenters[nodeIdx];
+        const sigma = nodeIdx === nodeRegions.length - 1 ? 2.6 : 3.0;
+
+        for (let i = region.start; i <= region.end; i++) {
+          const spatial = Math.exp(-0.5 * Math.pow((i - center) / sigma, 2));
+          potentials[i] = clamp(REST + delta * spatial, HYPER, PEAK);
+        }
+      });
+
+      triggerPotential = potentials[triggerIndex] ?? REST;
+
+      if (apElapsed > (nodeRegions.length - 1) * hopInterval + pulseDuration + 0.08) {
+        apActive = false;
+        apElapsed = 0;
+        triggerPotential = REST;
+        potentials.fill(REST);
+        hintEl.textContent = 'Aktionspotentialet er passeret. Nervecellen er tilbage ved hvilemembranpotentialet.';
+        stimCountBurst = 0;
+      }
+    }
+  }
+
+  function potentialColor(v){
+    if (v <= THRESHOLD) {
+      const t = Math.max(0, Math.min(1, (v - REST) / (THRESHOLD - REST)));
+      return `hsl(${215 - 175*t} 75% ${58 - 4*t}%)`;
+    }
+    const t = Math.max(0, Math.min(1, (v - THRESHOLD) / (PEAK - THRESHOLD)));
+    return `hsl(${40 - 35*t} 80% ${54 - 4*t}%)`;
+  }
+
+  function drawMyelinBand(ctx, x1, x2, top, height, label){
+    const r = 16;
+    ctx.save();
+    ctx.fillStyle = 'rgba(209, 213, 219, 0.34)';
+    ctx.fillRect(x1, top, x2 - x1, height);
+    ctx.strokeStyle = 'rgba(107, 114, 128, 0.42)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x1, top, x2 - x1, height);
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(label, (x1 + x2) / 2, top + 8);
+    ctx.restore();
+  }
+
+  function drawGraph(){
+    const W = graph.clientWidth;
+    const H = graph.clientHeight;
+    g.clearRect(0,0,W,H);
+    g.fillStyle = '#fff';
+    g.fillRect(0,0,W,H);
+
+    const margin = {left:72,right:24,top:24,bottom:48};
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+    const yMin = -90, yMax = 40;
+    const x = i => margin.left + (i / (N - 1)) * plotW;
+    const y = v => margin.top + (yMax - v) / (yMax - yMin) * plotH;
+
+    for (let v = -80; v <= 40; v += 20) {
+      const yy = y(v);
+      g.strokeStyle = '#e9edf4';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(margin.left, yy); g.lineTo(W - margin.right, yy); g.stroke();
+      g.fillStyle = '#667085';
+      g.font = '13px system-ui';
+      g.textAlign = 'right';
+      g.textBaseline = 'middle';
+      g.fillText(`${v} mV`, margin.left - 10, yy);
+    }
+
+    const refs = [
+      {v:30,label:'+30 mV', color:'#d92d20'},
+      {v:-50,label:'−50 mV  tærskel', color:'#b54708'},
+      {v:-70,label:'−70 mV  hvile', color:'#667085'},
+      {v:-90,label:'−90 mV  hyperpolarisering', color:'#6941c6'}
+    ];
+
+    refs.forEach(r => {
+      const yy = y(r.v);
+      g.save();
+      g.strokeStyle = r.color;
+      g.setLineDash([6,6]);
+      g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(margin.left, yy); g.lineTo(W - margin.right, yy); g.stroke();
+      g.restore();
+      g.fillStyle = r.color;
+      g.textAlign = 'left';
+      g.fillText(r.label, margin.left + 8, yy - 10);
+    });
+
+    // triggerområde
+    const tx1 = x(triggerIndex - 4), tx2 = x(triggerIndex + 4);
+    g.fillStyle = 'rgba(255, 208, 80, .13)';
+    g.fillRect(tx1, margin.top, tx2 - tx1, plotH);
+    g.fillStyle = '#7a4f01';
+    g.save();
+    g.translate((tx1 + tx2) / 2, margin.top + 52);
+    g.rotate(-Math.PI / 2);
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('triggerområde', 0, 0);
+    g.restore();
+
+    // myelinskeder som grå bånd i grafen
+    myelinSegments.forEach((seg, idx) => {
+      const mx1 = x(seg.start), mx2 = x(seg.end);
+      drawMyelinBand(g, mx1, mx2, margin.top, plotH, `myelinskede ${idx + 1}`);
+    });
+
+    // Kurven tegnes kun i noderne mellem myelinskederne
+    g.strokeStyle = '#233876';
+    g.lineWidth = 3;
+    g.beginPath();
+    let drawing = false;
+    for (let i = 0; i < N; i++) {
+      if (isMyelin(i)) {
+        drawing = false;
+        continue;
+      }
+      const displayedV = Math.abs(potentials[i] - REST) < 0.8 ? potentials[i] + restNoise[i] : potentials[i];
+      const xx = x(i), yy = y(displayedV);
+      if (!drawing) {
+        g.moveTo(xx, yy);
+        drawing = true;
+      } else {
+        g.lineTo(xx, yy);
+      }
+    }
+    g.stroke();
+
+    if (apActive) {
+      let peakIndex = 0;
+      let peakValue = -Infinity;
+      for (let i = 0; i < N; i++) {
+        if (!isMyelin(i) && potentials[i] > peakValue) {
+          peakValue = potentials[i];
+          peakIndex = i;
+        }
+      }
+      if (peakValue > THRESHOLD) {
+        const labelX = x(peakIndex);
+        const peakY = y(peakValue);
+        const labelY = Math.max(margin.top + 15, peakY - 18);
+        g.save();
+        g.font = 'bold 14px system-ui';
+        g.textAlign = 'center';
+        g.textBaseline = 'bottom';
+        g.fillStyle = '#233876';
+        g.fillText('Aktionspotentiale', labelX, labelY);
+        g.restore();
+      }
+    }
+
+    g.strokeStyle = '#98a2b3';
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(margin.left, margin.top);
+    g.lineTo(margin.left, H - margin.bottom);
+    g.lineTo(W - margin.right, H - margin.bottom);
+    g.stroke();
+    g.fillStyle = '#344054';
+    g.font = '14px system-ui';
+    g.textAlign = 'center';
+    g.fillText('Placering langs axonet →', margin.left + plotW / 2, H - 16);
+    g.save();
+    g.translate(18, margin.top + plotH / 2);
+    g.rotate(-Math.PI / 2);
+    g.fillText('Membranpotentiale (mV)', 0, 0);
+    g.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r, fill=true, stroke=false){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+    if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
+  }
+
+  function drawAxon(){
+    const W = axon.clientWidth, H = axon.clientHeight;
+    a.clearRect(0,0,W,H);
+    a.fillStyle = '#fbfcfe';
+    a.fillRect(0,0,W,H);
+
+    const left = 62, right = 24;
+    const x0 = left, x1 = W - right;
+    const yMid = 90;
+    const h = 34;
+    const idxToX = i => x0 + (i / (N - 1)) * (x1 - x0);
+
+    a.font = '14px system-ui';
+    a.fillStyle = '#475467';
+    a.textAlign = 'left';
+    a.fillText('Triggerområde', x0, 28);
+    a.textAlign = 'right';
+    a.fillText('Axon →', x1, 28);
+
+    // Basal axon
+    a.fillStyle = '#d9e7ff';
+    a.fillRect(x0, yMid - h/2, x1 - x0, h);
+
+    // Farveændringer i noderne
+    nodeRegions.forEach(region => {
+      for (let i = region.start; i <= region.end; i++) {
+        const xx = idxToX(i);
+        const next = idxToX(Math.min(N - 1, i + 1));
+        a.fillStyle = potentialColor(potentials[i]);
+        a.fillRect(xx, yMid - h/2, Math.max(1, next - xx + 0.4), h);
+      }
+    });
+
+    // Myelinskeder
+    myelinSegments.forEach((seg, idx) => {
+      const sx1 = idxToX(seg.start), sx2 = idxToX(seg.end);
+      a.save();
+      a.fillStyle = '#e5e7eb';
+      a.strokeStyle = '#98a2b3';
+      a.lineWidth = 2;
+      roundRect(a, sx1, yMid - h/2 - 12, sx2 - sx1, h + 24, 16, true, true);
+      a.strokeStyle = 'rgba(152,162,179,0.7)';
+      a.lineWidth = 1;
+      a.beginPath();
+      a.moveTo(sx1 + 8, yMid - h/2 - 4);
+      a.lineTo(sx2 - 8, yMid - h/2 - 4);
+      a.moveTo(sx1 + 8, yMid + h/2 + 4);
+      a.lineTo(sx2 - 8, yMid + h/2 + 4);
+      a.stroke();
+      a.fillStyle = '#475467';
+      a.font = '12px system-ui';
+      a.textAlign = 'center';
+      a.fillText(`Myelinskede ${idx + 1}`, (sx1 + sx2)/2, yMid - h/2 - 18);
+      a.restore();
+    });
+
+    // Omrids
+    a.strokeStyle = '#344054';
+    a.lineWidth = 2;
+    a.strokeRect(x0, yMid - h/2, x1 - x0, h);
+
+    // Ladningsforskelle vises kun i de blå nodeområder (ikke i myelinområderne).
+    // Der sættes nu flere symboler ind, og hele det aktive nodeområde får vendt
+    // fortegnene tydeligt, når aktionspotentialet er i netop den node.
+    a.font = 'bold 18px system-ui';
+    a.textAlign = 'center';
+    a.textBaseline = 'middle';
+    nodeRegions.forEach(region => {
+      const nodeWidthPx = idxToX(region.end) - idxToX(region.start);
+      const count = Math.max(4, Math.round(nodeWidthPx / 24));
+
+      let regionPeak = -Infinity;
+      for (let i = region.start; i <= region.end; i++) {
+        if (potentials[i] > regionPeak) regionPeak = potentials[i];
+      }
+      const reversedNode = regionPeak > 0;
+
+      for (let k = 0; k < count; k++) {
+        const frac = count === 1 ? 0.5 : k / (count - 1);
+        const idx = Math.round(region.start + frac * (region.end - region.start));
+        const px = idxToX(idx);
+        a.fillStyle = '#344054';
+        a.fillText(reversedNode ? '−' : '+', px, yMid - h/2 - 14);
+        a.fillText(reversedNode ? '+' : '−', px, yMid);
+      }
+    });
+
+    // marker triggerområde på axonet
+    const tx = idxToX(triggerIndex);
+    a.strokeStyle = '#7a4f01';
+    a.lineWidth = 3;
+    a.strokeRect(tx - 16, yMid - h/2 - 6, 32, h + 12);
+
+    a.fillStyle = '#172033';
+    a.font = 'bold 14px system-ui';
+    a.textAlign = 'center';
+    a.fillText(`${formatMv(triggerPotential)}`, tx, yMid + 50);
+
+    // Retningspil
+    a.strokeStyle = '#667085';
+    a.lineWidth = 1.5;
+    a.beginPath(); a.moveTo(x0, yMid + 74); a.lineTo(x1, yMid + 74); a.stroke();
+    a.beginPath(); a.moveTo(x1, yMid + 74); a.lineTo(x1 - 9, yMid + 68); a.lineTo(x1 - 9, yMid + 80); a.closePath(); a.fillStyle = '#667085'; a.fill();
+  }
+
+  function formatMv(v){
+    const n = Math.round(v * 10) / 10;
+    return `${n > 0 ? '+' : ''}${n.toFixed(1).replace('-', '−')} mV`;
+  }
+
+  function render(){
+    drawGraph();
+    drawAxon();
+  }
+
+  function loop(now){
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  stimBtn.addEventListener('click', () => {
+    if (apActive) return;
+    const now = performance.now();
+    if (now - lastStimTime > 900) stimCountBurst = 0;
+    stimCountBurst++;
+    lastStimTime = now;
+
+    triggerPotential = Math.min(THRESHOLD + 2, triggerPotential + stimulusStep);
+    potentials[triggerIndex] = triggerPotential;
+    hintEl.textContent = stimCountBurst < 5
+      ? `Na+ tilføjet ${stimCountBurst} gang(e): membranpotentialet stiger lidt, men falder igen mod −70 mV.`
+      : 'Stimulationerne summeres. Tærskelværdien er tæt på.';
+  });
+
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.textContent = paused ? 'Fortsæt' : 'Pause';
+    if (!paused) lastTime = performance.now();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    paused = false;
+    pauseBtn.textContent = 'Pause';
+    potentials.fill(REST);
+    triggerPotential = REST;
+    apActive = false;
+    apElapsed = 0;
+    stimCountBurst = 0;
+    restNoise.fill(0);
+    noiseTargets.fill(0);
+    noiseTimer = 0;
+    hintEl.textContent = 'Prøv at klikke langsomt først. Membranpotentialet falder tilbage mod −70 mV mellem stimulationerne.';
+    lastTime = performance.now();
+  });
+
+  resizeAll();
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
