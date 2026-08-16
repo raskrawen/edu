@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nervecellens membranpotentiale og aktionspotentiale</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --panel:#ffffff;
+    --text:#172033;
+    --muted:#667085;
+    --line:#d0d5dd;
+    --axon:#d9e7ff;
+    --trigger:#ffe8a3;
+    --accent:#3459e6;
+    --danger:#d92d20;
+    --success:#087e8b;
+    --grid:#e9edf4;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{
+    width:100vw;
+    height:100vh;
+    display:grid;
+    grid-template-columns:minmax(280px,1fr) minmax(0,2fr);
+    gap:14px;
+    padding:14px;
+  }
+  .leftcol,.rightcol{min-width:0;min-height:0}
+  .leftcol{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .intro{
+    background:var(--panel);
+    border:1px solid #e4e7ec;
+    border-radius:16px;
+    box-shadow:0 6px 18px rgba(16,24,40,.06);
+    padding:18px;
+  }
+  h1{font-size:clamp(1.35rem,2vw,2rem);margin:0 0 8px;line-height:1.1}
+  .subtitle{color:var(--muted);margin:0;line-height:1.42;font-size:.95rem}
+  .panel{
+    background:var(--panel);
+    border:1px solid #e4e7ec;
+    border-radius:16px;
+    box-shadow:0 6px 18px rgba(16,24,40,.06);
+    padding:16px;
+  }
+  .controlpanel{display:flex;flex-direction:column;gap:12px}
+  .controls{display:flex;flex-direction:column;gap:10px}
+  button{
+    appearance:none;
+    border:none;
+    border-radius:10px;
+    padding:11px 14px;
+    font-size:.98rem;
+    font-weight:650;
+    cursor:pointer;
+    width:100%;
+  }
+  #stimBtn{background:var(--accent);color:white}
+  #pauseBtn{background:#eef2ff;color:#233876}
+  #resetBtn{background:#f2f4f7;color:#344054}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .hint{
+    padding:11px 12px;
+    border-radius:10px;
+    background:#f8fafc;
+    border-left:4px solid #98a2b3;
+    color:#344054;
+    line-height:1.4;
+    font-size:.93rem;
+  }
+  .small{font-size:.88rem;color:var(--muted);line-height:1.42;margin:0}
+  .rightcol{display:flex}
+  .sim-wrap{
+    flex:1;
+    min-height:0;
+    display:flex;
+    padding:12px;
+    overflow:hidden;
+  }
+  .diagram{
+    width:100%;
+    min-width:0;
+    min-height:0;
+    display:grid;
+    grid-template-rows:minmax(0,2fr) minmax(150px,1fr);
+    gap:6px;
+  }
+  canvas{width:100%;height:100%;display:block;border-radius:12px}
+  #graph{background:#fff;min-height:0}
+  #axon{background:#fbfcfe;min-height:0}
+  @media (max-width:900px){
+    html,body{overflow:auto}
+    .wrap{height:auto;min-height:100vh;grid-template-columns:1fr}
+    .rightcol{min-height:620px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="leftcol">
+    <section class="intro">
+      <h1>Membranpotentiale og aktionspotentiale</h1>
+      <p class="subtitle">
+        Klik hurtigt flere gange på <strong>Tilføj Na+ i triggerområdet</strong>. Hvert klik depolariserer triggerområdet lidt. Hvis stimulationerne kommer hurtigt nok, summeres de, tærskelværdien på −50 mV nås, og et aktionspotentiale udløses og bevæger sig langs axonet.
+      </p>
+    </section>
+
+    <section class="panel controlpanel">
+      <div class="controls">
+        <button id="stimBtn">Tilføj Na+ i triggerområdet</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBtn">Nulstil</button>
+      </div>
+      <div class="hint" id="hint">Prøv at klikke langsomt først. Membranpotentialet falder tilbage mod −70 mV mellem stimulationerne.</div>
+      <p class="small">
+        Grafens x-akse viser <strong>placering langs axonet</strong>. Kurven og axonet er synkroniserede, så et punkt på grafen svarer til det samme sted på axonet.
+      </p>
+    </section>
+  </aside>
+
+  <main class="rightcol">
+    <section class="panel sim-wrap">
+      <div class="diagram">
+        <canvas id="graph" width="1100" height="360" aria-label="Graf over membranpotentiale langs axonet"></canvas>
+        <canvas id="axon" width="1100" height="180" aria-label="Axon med dynamisk membranpotentiale"></canvas>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const graph = document.getElementById('graph');
+  const axon = document.getElementById('axon');
+  const g = graph.getContext('2d');
+  const a = axon.getContext('2d');
+  const stimBtn = document.getElementById('stimBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const hintEl = document.getElementById('hint');
+
+  const REST = -70;
+  const THRESHOLD = -50;
+  const PEAK = 30;
+  const N = 220;
+  const triggerIndex = 10;
+  let potentials = new Array(N).fill(REST);
+  let triggerPotential = REST;
+  let paused = false;
+  let lastTime = performance.now();
+  let apActive = false;
+  let apPosition = triggerIndex;
+  let lastStimTime = 0;
+  let stimCountBurst = 0;
+
+  // Lille, visuel hvile-støj på grafen (ca. ±1 mV).
+  // Støjen ændrer ikke den faglige model eller tærskelberegningen.
+  let restNoise = new Array(N).fill(0);
+  let noiseTargets = new Array(N).fill(0);
+  let noiseTimer = 0;
+
+  const decayRate = 9.5;     // mV/s toward rest in trigger area
+  const stimulusStep = 4.2;  // mV per click
+  const propagationSpeed = 42; // indices per second
+
+  function resizeCanvas(canvas, ctx) {
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * ratio);
+    canvas.height = Math.round(rect.height * ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+  }
+
+  function resizeAll(){
+    resizeCanvas(graph,g);
+    resizeCanvas(axon,a);
+  }
+  window.addEventListener('resize', resizeAll);
+
+  function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+
+  function actionPotentialShape(distance){
+    // Hurtig depolarisering til ca. +30 mV efterfulgt af repolarisering.
+    // Bag aktionspotentialet kommer en kort efterhyperpolarisering til ca. −90 mV,
+    // som visualiserer den refraktære periode, før membranen vender tilbage til hvile.
+    const up = sigmoid((distance + 0.8) * 4.6);
+    const down = sigmoid((distance - 1.7) * 2.7);
+    const pulse = Math.max(0, up - down);
+    const refractoryDip = 20 * Math.exp(-0.5 * Math.pow((distance + 2.5) / 0.8, 2));
+    return REST + pulse * 104 - refractoryDip;
+  }
+
+  function update(dt){
+    if (paused) return;
+
+    // Lav nye små tilfældige mål jævnligt og glid roligt imod dem.
+    noiseTimer += dt;
+    if (noiseTimer >= 0.12) {
+      noiseTimer = 0;
+      for (let i = 0; i < N; i++) noiseTargets[i] = (Math.random() * 2) - 1;
+    }
+    for (let i = 0; i < N; i++) {
+      restNoise[i] += (noiseTargets[i] - restNoise[i]) * Math.min(1, dt * 7);
+    }
+
+    if (!apActive) {
+      if (triggerPotential > REST) {
+        triggerPotential = Math.max(REST, triggerPotential - decayRate * dt);
+      }
+      potentials.fill(REST);
+      potentials[triggerIndex] = triggerPotential;
+
+      if (triggerPotential >= THRESHOLD) {
+        triggerPotential = THRESHOLD;
+        apActive = true;
+        apPosition = triggerIndex;
+        hintEl.textContent = 'Nu bevæger aktionspotentialet sig mod højre langs axonet.';
+      }
+    } else {
+      apPosition += propagationSpeed * dt;
+      potentials.fill(REST);
+
+      for (let i = 0; i < N; i++) {
+        const d = i - apPosition;
+        if (d > -15 && d < 12) {
+          potentials[i] = actionPotentialShape(d/2.1);
+        }
+      }
+
+      // triggerområdet vender tilbage til hvile, når pulsen har passeret
+      triggerPotential = potentials[triggerIndex] ?? REST;
+
+      if (apPosition > N + 8) {
+        apActive = false;
+        triggerPotential = REST;
+        potentials.fill(REST);
+        hintEl.textContent = 'Aktionspotentialet er passeret. Nervecellen er tilbage ved hvilemembranpotentialet.';
+        stimCountBurst = 0;
+      }
+    }
+  }
+
+  function potentialColor(v){
+    // blå ved hvile, orange omkring tærskel, rød ved positivt potentiale
+    if (v <= THRESHOLD) {
+      const t = Math.max(0, Math.min(1, (v-REST)/(THRESHOLD-REST)));
+      return `hsl(${215 - 175*t} 75% ${58 - 4*t}%)`;
+    }
+    const t = Math.max(0, Math.min(1, (v-THRESHOLD)/(PEAK-THRESHOLD)));
+    return `hsl(${40 - 35*t} 80% ${54 - 4*t}%)`;
+  }
+
+  function drawGraph(){
+    const W = graph.clientWidth;
+    const H = graph.clientHeight;
+    g.clearRect(0,0,W,H);
+    g.fillStyle = '#fff';
+    g.fillRect(0,0,W,H);
+
+    const margin = {left:72,right:24,top:24,bottom:48};
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+    const yMin = -90, yMax = 40;
+    const x = i => margin.left + (i/(N-1))*plotW;
+    const y = v => margin.top + (yMax-v)/(yMax-yMin)*plotH;
+
+    // grid + reference lines
+    const refs = [
+      {v:30,label:'+30 mV', color:'#d92d20'},
+      {v:-50,label:'−50 mV  tærskel', color:'#b54708'},
+      {v:-70,label:'−70 mV  hvile', color:'#667085'},
+      {v:-90,label:'−90 mV  hyperpolarisering', color:'#6941c6'}
+    ];
+
+    g.font = '13px system-ui';
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    for (let v=-80; v<=40; v+=20){
+      const yy=y(v);
+      g.strokeStyle='#e9edf4';
+      g.lineWidth=1;
+      g.beginPath(); g.moveTo(margin.left,yy); g.lineTo(W-margin.right,yy); g.stroke();
+      g.fillStyle='#667085';
+      g.fillText(`${v} mV`, margin.left-10, yy);
+    }
+
+    refs.forEach(r=>{
+      const yy=y(r.v);
+      g.save();
+      g.strokeStyle=r.color;
+      g.setLineDash([6,6]);
+      g.lineWidth=1.5;
+      g.beginPath();g.moveTo(margin.left,yy);g.lineTo(W-margin.right,yy);g.stroke();
+      g.restore();
+      g.fillStyle=r.color;
+      g.textAlign='left';
+      g.fillText(r.label, margin.left+8, yy-10);
+    });
+
+    // trigger area highlight
+    const tx1 = x(triggerIndex-3), tx2=x(triggerIndex+3);
+    g.fillStyle='rgba(255, 208, 80, .12)';
+    g.fillRect(tx1,margin.top,tx2-tx1,plotH);
+    g.fillStyle='#7a4f01';
+    g.textAlign='center';
+    g.save();
+    g.translate((tx1+tx2)/2, margin.top+52);
+    g.rotate(-Math.PI/2);
+    g.textAlign='center';
+    g.textBaseline='middle';
+    g.fillText('triggerområde', 0, 0);
+    g.restore();
+
+    // curve
+    g.strokeStyle='#233876';
+    g.lineWidth=3;
+    g.beginPath();
+    potentials.forEach((v,i)=>{
+      // Kun hvilende membranområder får den lille synlige ±1 mV-støj.
+      const displayedV = Math.abs(v - REST) < 0.8 ? v + restNoise[i] : v;
+      const xx=x(i), yy=y(displayedV);
+      if(i===0)g.moveTo(xx,yy); else g.lineTo(xx,yy);
+    });
+    g.stroke();
+
+    // Label, der følger toppen af aktionspotentialet langs axonet
+    if (apActive) {
+      let peakIndex = 0;
+      let peakValue = -Infinity;
+      for (let i = 0; i < N; i++) {
+        if (potentials[i] > peakValue) {
+          peakValue = potentials[i];
+          peakIndex = i;
+        }
+      }
+      if (peakValue > THRESHOLD) {
+        const labelX = x(peakIndex);
+        const peakY = y(peakValue);
+        const labelY = Math.max(margin.top + 15, peakY - 18);
+        g.save();
+        g.font = 'bold 14px system-ui';
+        g.textAlign = 'center';
+        g.textBaseline = 'bottom';
+        g.fillStyle = '#233876';
+        g.fillText('Aktionspotentiale', labelX, labelY);
+        g.restore();
+      }
+    }
+
+    // axis
+    g.strokeStyle='#98a2b3';
+    g.lineWidth=1.2;
+    g.beginPath();g.moveTo(margin.left,margin.top);g.lineTo(margin.left,H-margin.bottom);g.lineTo(W-margin.right,H-margin.bottom);g.stroke();
+    g.fillStyle='#344054';
+    g.font='14px system-ui';
+    g.textAlign='center';
+    g.fillText('Placering langs axonet →', margin.left+plotW/2, H-16);
+    g.save();
+    g.translate(18, margin.top+plotH/2);
+    g.rotate(-Math.PI/2);
+    g.fillText('Membranpotentiale (mV)',0,0);
+    g.restore();
+  }
+
+  function drawAxon(){
+    const W=axon.clientWidth, H=axon.clientHeight;
+    a.clearRect(0,0,W,H);
+    a.fillStyle='#fbfcfe'; a.fillRect(0,0,W,H);
+    const left=62,right=24;
+    const x0=left, x1=W-right;
+    const yMid=88;
+    const h=42;
+
+    // title labels
+    a.font='14px system-ui';
+    a.fillStyle='#475467';
+    a.textAlign='left';
+    a.fillText('Triggerområde', x0, 28);
+    a.textAlign='right';
+    a.fillText('Axon →', x1, 28);
+
+    // axon segments
+    for(let i=0;i<N;i++){
+      const xx=x0+(i/(N-1))*(x1-x0);
+      const next=x0+((i+1)/(N-1))*(x1-x0);
+      a.fillStyle=potentialColor(potentials[i]);
+      a.fillRect(xx,yMid-h/2,Math.max(1,next-xx+0.5),h);
+    }
+
+    // outline
+    a.strokeStyle='#344054'; a.lineWidth=2;
+    a.strokeRect(x0,yMid-h/2,x1-x0,h);
+
+    // ladningsforskelle på hver side af membranen
+    // Ved hvile: + udenfor og − indenfor. Under den positive del af AP'et vendes fortegnene.
+    const chargeStep = 34;
+    const chargePositions = [];
+    for(let px=x0+14; px<x1-8; px+=chargeStep) chargePositions.push(px);
+
+    // Gør polaritetsskiftet synligt: mens AP'et bevæger sig, er to nabosæt
+    // af ladninger vendt samtidigt. De to sæt følger AP'ets position langs axonet.
+    let reversedChargeA = -1;
+    let reversedChargeB = -1;
+    if (apActive && chargePositions.length >= 2) {
+      const apX = x0 + (apPosition/(N-1))*(x1-x0);
+      let nearest = 0;
+      let nearestDistance = Infinity;
+      chargePositions.forEach((px,j)=>{
+        const dist = Math.abs(px-apX);
+        if (dist < nearestDistance) { nearestDistance = dist; nearest = j; }
+      });
+      nearest = Math.max(1, Math.min(chargePositions.length-1, nearest));
+      reversedChargeA = nearest-1;
+      reversedChargeB = nearest;
+    }
+
+    a.font='bold 18px system-ui';
+    a.textAlign='center';
+    a.textBaseline='middle';
+    chargePositions.forEach((px,j)=>{
+      const frac=(px-x0)/(x1-x0);
+      const idx=Math.max(0,Math.min(N-1,Math.round(frac*(N-1))));
+      const reversed = potentials[idx] > 0 || j === reversedChargeA || j === reversedChargeB;
+      a.fillStyle='#344054';
+      a.fillText(reversed ? '−' : '+', px, yMid-h/2-14);
+      a.fillText(reversed ? '+' : '−', px, yMid);
+    });
+
+    // trigger region
+    const tx = x0 + (triggerIndex/(N-1))*(x1-x0);
+    a.strokeStyle='#7a4f01'; a.lineWidth=3;
+    a.strokeRect(tx-16,yMid-h/2-6,32,h+12);
+
+    // current membrane potential label at trigger
+    a.fillStyle='#172033';
+    a.font='bold 14px system-ui';
+    a.textAlign='center';
+    a.fillText(`${formatMv(triggerPotential)}`, tx, yMid+48);
+
+    // direction arrow
+    a.strokeStyle='#667085'; a.lineWidth=1.5;
+    a.beginPath(); a.moveTo(x0,yMid+74); a.lineTo(x1,yMid+74); a.stroke();
+    a.beginPath(); a.moveTo(x1,yMid+74); a.lineTo(x1-9,yMid+68); a.lineTo(x1-9,yMid+80); a.closePath(); a.fillStyle='#667085'; a.fill();
+  }
+
+  function formatMv(v){
+    const n=Math.round(v*10)/10;
+    return `${n>0?'+':''}${n.toFixed(1).replace('-', '−')} mV`;
+  }
+
+  function render(){
+    drawGraph();
+    drawAxon();
+  }
+
+  function loop(now){
+    const dt=Math.min(0.05,(now-lastTime)/1000);
+    lastTime=now;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  stimBtn.addEventListener('click',()=>{
+    if (apActive) return;
+    const now=performance.now();
+    if(now-lastStimTime>900) stimCountBurst=0;
+    stimCountBurst++;
+    lastStimTime=now;
+
+    triggerPotential = Math.min(THRESHOLD+2, triggerPotential + stimulusStep);
+    potentials[triggerIndex] = triggerPotential;
+    hintEl.textContent = stimCountBurst < 5
+      ? `Na+ tilføjet ${stimCountBurst} gang(e): membranpotentialet stiger lidt, men falder igen mod −70 mV.`
+      : 'Stimulationerne summeres. Tærskelværdien er tæt på.';
+  });
+
+  pauseBtn.addEventListener('click',()=>{
+    paused=!paused;
+    pauseBtn.textContent = paused ? 'Fortsæt' : 'Pause';
+    if(!paused) lastTime=performance.now();
+  });
+
+  resetBtn.addEventListener('click',()=>{
+    paused=false;
+    pauseBtn.textContent='Pause';
+    potentials.fill(REST);
+    triggerPotential=REST;
+    apActive=false;
+    apPosition=triggerIndex;
+    stimCountBurst=0;
+    restNoise.fill(0);
+    noiseTargets.fill(0);
+    noiseTimer=0;
+    hintEl.textContent='Prøv at klikke langsomt først. Membranpotentialet falder tilbage mod −70 mV mellem stimulationerne.';
+    lastTime=performance.now();
+  });
+
+  resizeAll();
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
