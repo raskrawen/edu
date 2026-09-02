@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interaktiv partikelsimulation af dannelsen af dibrom i vandig opløsning.">
+  <title>Dibromdannelse – interaktiv simulation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #eef6f5;
+      --muted: #9db3b2;
+      --panel: rgba(15, 31, 34, .86);
+      --panel-2: rgba(20, 43, 45, .76);
+      --line: rgba(188, 224, 217, .16);
+      --cyan: #58d5ca;
+      --amber: #f1a44c;
+      --rose: #ff5f85;
+      --bromine: #c65c2e;
+      --bromine-light: #ef9a61;
+      --water: #69b8e5;
+      --bg: #071416;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 12%, rgba(49, 122, 118, .18), transparent 35rem),
+        radial-gradient(circle at 85% 88%, rgba(173, 67, 36, .12), transparent 32rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+    }
+
+    button, input, select { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(88, 213, 202, .45);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1480px, 100%); margin: 0 auto; padding: 22px; }
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+    .eyebrow {
+      color: var(--cyan);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin: 0 0 7px;
+    }
+    h1 { font-size: clamp(1.7rem, 3vw, 2.75rem); line-height: 1; margin: 0; letter-spacing: -.045em; }
+    .equation {
+      flex: 0 1 auto;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(7, 20, 22, .62);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1rem, 1.55vw, 1.35rem);
+      white-space: nowrap;
+    }
+    .grid { display: grid; grid-template-columns: minmax(380px, .9fr) minmax(480px, 1.25fr); gap: 16px; }
+    .card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(145deg, var(--panel), var(--panel-2));
+      box-shadow: 0 18px 70px rgba(0, 0, 0, .22);
+    }
+    .card-head {
+      min-height: 74px;
+      padding: 17px 20px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .card h2 { margin: 0 0 3px; font-size: 1rem; letter-spacing: -.01em; }
+    .sub { margin: 0; color: var(--muted); font-size: .82rem; }
+    .badge {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      padding: 8px 11px;
+      border: 1px solid rgba(198, 92, 46, .42);
+      border-radius: 10px;
+      background: rgba(198, 92, 46, .13);
+      color: #ffd4bb;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .badge strong { font-size: 1.25rem; }
+    .canvas-wrap { position: relative; height: clamp(390px, 54vh, 610px); }
+    canvas { display: block; width: 100%; height: 100%; }
+    .legend {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      pointer-events: none;
+    }
+    .key {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: 8px;
+      background: rgba(4, 13, 15, .74);
+      border: 1px solid rgba(255,255,255,.1);
+      color: #dbe8e7;
+      font-size: .75rem;
+      backdrop-filter: blur(8px);
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 25%, transparent); }
+    .graph-wrap { height: clamp(390px, 54vh, 610px); padding: 8px 10px 5px 2px; }
+    .readouts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .metric { min-width: 96px; }
+    .metric span { display: block; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
+    .metric strong { font-size: 1.08rem; font-variant-numeric: tabular-nums; }
+
+    .controls {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: auto auto minmax(260px, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(12, 27, 29, .86);
+    }
+    .temperature-control {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(110px, auto) minmax(220px, 1fr) 72px minmax(220px, auto);
+      align-items: center;
+      gap: 12px;
+      padding: 12px 4px 2px;
+      border-top: 1px solid var(--line);
+    }
+    .temperature-control label { font-weight: 800; }
+    .temperature-control output { color: #ffd4bb; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .temperature-hint { color: var(--muted); font-size: .78rem; text-align: right; }
+    .btn {
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 10px;
+      padding: 0 17px;
+      color: var(--ink);
+      background: rgba(255,255,255,.06);
+      cursor: pointer;
+      font-weight: 750;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.3); }
+    .btn.primary { border-color: transparent; background: var(--cyan); color: #06211f; min-width: 108px; }
+    .btn.primary:hover { background: #72e7dc; }
+    .timeline { display: grid; grid-template-columns: minmax(62px, auto) 1fr minmax(50px, auto); align-items: center; gap: 11px; }
+    .timeline label { color: var(--muted); font-size: .82rem; }
+    .time-label { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+    input[type="range"] {
+      width: 100%; height: 24px; appearance: none; background: transparent; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track { height: 5px; border-radius: 9px; background: linear-gradient(90deg, var(--cyan) var(--progress), rgba(255,255,255,.12) var(--progress)); }
+    input[type="range"]::-webkit-slider-thumb { appearance: none; width: 19px; height: 19px; border-radius: 50%; background: #eafffc; border: 4px solid var(--cyan); margin-top: -7px; box-shadow: 0 2px 9px rgba(0,0,0,.3); }
+    input[type="range"]::-moz-range-track { height: 5px; border-radius: 9px; background: rgba(255,255,255,.12); }
+    input[type="range"]::-moz-range-progress { height: 5px; border-radius: 9px; background: var(--cyan); }
+    input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #eafffc; border: 4px solid var(--cyan); }
+    .speed { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .82rem; }
+    select { color: var(--ink); background: #102729; border: 1px solid rgba(255,255,255,.15); border-radius: 9px; min-height: 40px; padding: 0 30px 0 10px; }
+    .note { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; }
+
+    @media (max-width: 920px) {
+      .shell { padding: 15px; }
+      header { align-items: flex-start; flex-direction: column; gap: 13px; }
+      .equation { width: 100%; overflow-x: auto; }
+      .grid { grid-template-columns: 1fr; }
+      .canvas-wrap, .graph-wrap { height: 420px; }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .timeline { grid-column: 1 / -1; grid-row: 1; }
+      .speed { justify-self: end; }
+      .temperature-control { grid-template-columns: auto 1fr 62px; }
+      .temperature-hint { grid-column: 1 / -1; text-align: left; }
+    }
+    @media (max-width: 540px) {
+      .shell { padding: 10px; }
+      .card-head { align-items: flex-start; }
+      .readouts { display: grid; }
+      .canvas-wrap, .graph-wrap { height: 360px; }
+      .controls { gap: 9px; }
+      .btn { padding: 0 12px; }
+      .speed { grid-column: 1 / -1; justify-self: start; }
+      .temperature-control { grid-template-columns: 1fr 60px; }
+      .temperature-control label { grid-column: 1 / -1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Reaktionshastighed · partikelniveau</p>
+        <h1>Dannelse af dibrom</h1>
+      </div>
+      <div class="equation" aria-label="5 bromidioner plus 1 bromation plus 6 hydrogenioner danner 3 dibrommolekyler og 3 vandmolekyler">
+        5Br⁻(aq) + BrO₃⁻(aq) + 6H⁺(aq) → 3Br₂(aq) + 3H₂O(l)
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Simulation og koncentrationsgraf">
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h2>Partikler i opløsningen</h2>
+            <p class="sub">Netto-partikler; vand som opløsningsmiddel er nedtonet</p>
+          </div>
+          <div class="badge"><strong id="particleBr2">0</strong><span>Br₂</span></div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="particleCanvas" role="img" aria-label="Animeret partikelmodel af reaktionen"></canvas>
+          <div class="legend" aria-hidden="true">
+            <span class="key"><i class="dot" style="--c:#58d5ca"></i>Br⁻</span>
+            <span class="key"><i class="dot" style="--c:#f1a44c"></i>BrO₃⁻</span>
+            <span class="key"><i class="dot" style="--c:#ff5f85"></i>H⁺</span>
+            <span class="key"><i class="dot" style="--c:#c65c2e"></i>Br₂</span>
+            <span class="key"><i class="dot" style="--c:#69b8e5"></i>H₂O</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h2>Koncentrationen af Br₂</h2>
+            <p class="sub">Kurven tegnes, mens reaktionen forløber</p>
+          </div>
+          <div class="readouts">
+            <div class="metric"><span>Tid</span><strong id="metricTime">0 s</strong></div>
+            <div class="metric"><span>[Br₂]</span><strong id="metricConc">0,00 mM</strong></div>
+            <div class="metric"><span>Hastighed</span><strong id="metricRate">0,034 mM/s</strong></div>
+          </div>
+        </div>
+        <div class="graph-wrap">
+          <canvas id="graphCanvas" role="img" aria-label="Graf over dibromkoncentrationen som funktion af tiden"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="controls" aria-label="Styr simulationen">
+      <button class="btn primary" id="playBtn" type="button">▶ Start</button>
+      <button class="btn" id="resetBtn" type="button">↺ Nulstil</button>
+      <div class="timeline">
+        <label for="timeSlider">Tid</label>
+        <input id="timeSlider" type="range" min="0" max="400" step="1" value="0" style="--progress:0%">
+        <output class="time-label" id="timeOutput" for="timeSlider">0 s</output>
+      </div>
+      <label class="speed">Hastighed
+        <select id="speedSelect" aria-label="Simulationshastighed">
+          <option value="1">1×</option>
+          <option value="2">2×</option>
+          <option value="5">5×</option>
+        </select>
+      </label>
+      <div class="temperature-control">
+        <label for="temperatureSlider">Temperatur</label>
+        <input id="temperatureSlider" type="range" min="5" max="80" step="1" value="25" style="--progress:27%">
+        <output id="temperatureOutput" for="temperatureSlider">25 °C</output>
+        <span class="temperature-hint">Temperaturen styrer agenternes fart og reaktionens hastighed</span>
+      </div>
+    </section>
+    <p class="note">Ved 25 °C følger modellen [Br₂] = 3,00 mM · (1 − e<sup>−0,0115·t</sup>). Hver agent har egen position og hastighed; partikelbevægelsens temperaturforskel er visuelt forstærket, mens reaktionshastigheden ændres med en forenklet Arrhenius-sammenhæng.</p>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+      const MAX_T = 400;
+      const C_MAX = 3.0;
+      const K = 0.0115;
+      const SIM_SECONDS_PER_REAL_SECOND = 20;
+      const particleCanvas = document.getElementById('particleCanvas');
+      const graphCanvas = document.getElementById('graphCanvas');
+      const pctx = particleCanvas.getContext('2d');
+      const gctx = graphCanvas.getContext('2d');
+      const playBtn = document.getElementById('playBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const slider = document.getElementById('timeSlider');
+      const speedSelect = document.getElementById('speedSelect');
+      const temperatureSlider = document.getElementById('temperatureSlider');
+      const temperatureOutput = document.getElementById('temperatureOutput');
+      const timeOutput = document.getElementById('timeOutput');
+      const metricTime = document.getElementById('metricTime');
+      const metricConc = document.getElementById('metricConc');
+      const metricRate = document.getElementById('metricRate');
+      const particleBr2 = document.getElementById('particleBr2');
+
+      let time = 0;
+      let playing = false;
+      let lastFrame = performance.now();
+      let phase = 0;
+      let temperature = 25;
+      let agents = [];
+      let reactionEvents = 0;
+      let flashes = [];
+      let particleSize = { w: 0, h: 0, dpr: 1 };
+      let graphSize = { w: 0, h: 0, dpr: 1 };
+
+      const kAtTemperature = () => K * Math.exp(0.025 * (temperature - 25));
+      const concentration = t => C_MAX * (1 - Math.exp(-kAtTemperature() * t));
+      const rate = t => C_MAX * kAtTemperature() * Math.exp(-kAtTemperature() * t);
+      const progress = t => concentration(t) / C_MAX;
+      const fmt = (n, digits = 2) => n.toLocaleString('da-DK', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+      function seeded(index, salt) {
+        const x = Math.sin(index * 91.733 + salt * 17.17) * 43758.5453;
+        return x - Math.floor(x);
+      }
+
+      const speciesData = {
+        br:   { r: 8.5, color: '#58d5ca', label: 'Br⁻' },
+        bro3: { r: 11.3, color: '#f1a44c', label: 'BrO₃⁻' },
+        h:    { r: 6.3, color: '#ff5f85', label: 'H⁺' },
+        br2:  { r: 10.5, color: '#c65c2e', label: '' },
+        water:{ r: 4.5, color: '#69b8e5', label: '' }
+      };
+
+      function makeAgent(species, x, y, seed = Math.random()) {
+        const angle = seed * Math.PI * 2;
+        const base = 24 + ((seed * 997) % 1) * 27;
+        return { species, x, y, vx: Math.cos(angle) * base, vy: Math.sin(angle) * base, spin: seed * 6.28 };
+      }
+
+      function initAgents() {
+        if (!particleSize.w || !particleSize.h) return;
+        agents = [];
+        reactionEvents = 0;
+        flashes = [];
+        const initial = { br: 40, bro3: 8, h: 48, water: 18 };
+        let n = 0;
+        Object.entries(initial).forEach(([species, count], typeIndex) => {
+          for (let i = 0; i < count; i++, n++) {
+            const d = speciesData[species];
+            const margin = 24 + d.r;
+            const x = margin + seeded(n, 61 + typeIndex) * Math.max(1, particleSize.w - margin * 2);
+            const y = margin + seeded(n, 71 + typeIndex) * Math.max(1, particleSize.h - margin * 2 - 48);
+            agents.push(makeAgent(species, x, y, seeded(n, 81 + typeIndex)));
+          }
+        });
+      }
+
+      function nearestAgents(species, x, y, count) {
+        return agents
+          .filter(a => a.species === species)
+          .sort((a, b) => ((a.x-x)**2 + (a.y-y)**2) - ((b.x-x)**2 + (b.y-y)**2))
+          .slice(0, count);
+      }
+
+      function performReaction() {
+        const centerAgent = agents.find(a => a.species === 'bro3');
+        if (!centerAgent) return false;
+        const center = { x: centerAgent.x, y: centerAgent.y };
+        const consumed = [
+          ...nearestAgents('br', center.x, center.y, 5),
+          ...nearestAgents('bro3', center.x, center.y, 1),
+          ...nearestAgents('h', center.x, center.y, 6)
+        ];
+        if (consumed.length < 12) return false;
+        const remove = new Set(consumed);
+        agents = agents.filter(a => !remove.has(a));
+        for (let i = 0; i < 3; i++) {
+          const a = i * Math.PI * 2 / 3 + reactionEvents;
+          agents.push(makeAgent('br2', center.x + Math.cos(a)*13, center.y + Math.sin(a)*13, seeded(reactionEvents*3+i, 96)));
+          agents.push(makeAgent('water', center.x + Math.cos(a+1)*18, center.y + Math.sin(a+1)*18, seeded(reactionEvents*3+i, 99)));
+        }
+        flashes.push({ x: center.x, y: center.y, life: 1 });
+        reactionEvents++;
+        return true;
+      }
+
+      function syncReactions(rebuild = false) {
+        const wanted = Math.min(8, Math.round(progress(time) * 8));
+        if (rebuild || wanted < reactionEvents) initAgents();
+        while (reactionEvents < wanted && performReaction()) {}
+      }
+
+      function temperatureMotionFactor() {
+        return .58 + ((temperature - 5) / 75) * 1.32;
+      }
+
+      function updateAgents(dt) {
+        if (!agents.length) initAgents();
+        const factor = temperatureMotionFactor();
+        const floor = particleSize.h - 50;
+        for (const a of agents) {
+          const d = speciesData[a.species];
+          a.x += a.vx * dt * factor;
+          a.y += a.vy * dt * factor;
+          a.spin += dt * factor;
+          if (a.x < d.r) { a.x = d.r; a.vx = Math.abs(a.vx); }
+          if (a.x > particleSize.w-d.r) { a.x = particleSize.w-d.r; a.vx = -Math.abs(a.vx); }
+          if (a.y < d.r) { a.y = d.r; a.vy = Math.abs(a.vy); }
+          if (a.y > floor-d.r) { a.y = floor-d.r; a.vy = -Math.abs(a.vy); }
+        }
+        for (let i = 0; i < agents.length; i++) {
+          for (let j = i + 1; j < agents.length; j++) {
+            const a = agents[i], b = agents[j];
+            const ra = speciesData[a.species].r, rb = speciesData[b.species].r;
+            const dx = b.x-a.x, dy = b.y-a.y, rr = ra+rb;
+            const d2 = dx*dx+dy*dy;
+            if (d2 > 0 && d2 < rr*rr) {
+              const dist = Math.sqrt(d2), nx = dx/dist, ny = dy/dist;
+              const overlap = (rr-dist)/2;
+              a.x -= nx*overlap; a.y -= ny*overlap; b.x += nx*overlap; b.y += ny*overlap;
+              const rel = (b.vx-a.vx)*nx + (b.vy-a.vy)*ny;
+              if (rel < 0) {
+                a.vx += rel*nx; a.vy += rel*ny;
+                b.vx -= rel*nx; b.vy -= rel*ny;
+              }
+            }
+          }
+        }
+        flashes.forEach(f => f.life -= dt*2.1);
+        flashes = flashes.filter(f => f.life > 0);
+      }
+
+      function sizeCanvas(canvas, ctx) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.max(1, Math.round(rect.width));
+        const h = Math.max(1, Math.round(rect.height));
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { w, h, dpr };
+      }
+
+      function drawIon(ctx, x, y, radius, color, label, alpha = 1) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const grad = ctx.createRadialGradient(x - radius*.3, y - radius*.35, 1, x, y, radius);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(.12, color);
+        grad.addColorStop(1, color + '88');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 9;
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+        if (label) {
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#071416';
+          ctx.font = `700 ${Math.max(8, radius*.85)}px system-ui`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(label, x, y + .5);
+        }
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        const { w, h } = particleSize;
+        pctx.clearRect(0, 0, w, h);
+        const bg = pctx.createLinearGradient(0, 0, 0, h);
+        bg.addColorStop(0, 'rgba(40,106,110,.17)');
+        bg.addColorStop(1, 'rgba(20,66,73,.42)');
+        pctx.fillStyle = bg; pctx.fillRect(0, 0, w, h);
+
+        pctx.strokeStyle = 'rgba(130,213,218,.08)'; pctx.lineWidth = 1;
+        for (let y = 32; y < h; y += 48) {
+          pctx.beginPath(); pctx.moveTo(0, y + Math.sin(phase+y)*2); pctx.lineTo(w, y); pctx.stroke();
+        }
+
+        const compact = w < 440;
+        const scale = compact ? .82 : 1;
+        for (const a of agents.filter(a => a.species === 'water')) drawIon(pctx, a.x, a.y, 4.5*scale, '#69b8e5', '', .16);
+        for (const a of agents.filter(a => a.species === 'br')) drawIon(pctx, a.x, a.y, 8.5*scale, '#58d5ca', 'Br⁻', .92);
+        for (const a of agents.filter(a => a.species === 'h')) drawIon(pctx, a.x, a.y, 6.3*scale, '#ff5f85', 'H⁺', .83);
+        for (const a of agents.filter(a => a.species === 'bro3')) drawIon(pctx, a.x, a.y, 11.3*scale, '#f1a44c', 'BrO₃⁻', .94);
+        for (const a of agents.filter(a => a.species === 'br2')) {
+          const angle = a.spin;
+          const d = 7.5*scale;
+          const dx = Math.cos(angle)*d, dy = Math.sin(angle)*d;
+          pctx.save();
+          pctx.strokeStyle = 'rgba(255,203,170,.65)'; pctx.lineWidth = 3;
+          pctx.beginPath(); pctx.moveTo(a.x-dx*.75, a.y-dy*.75); pctx.lineTo(a.x+dx*.75, a.y+dy*.75); pctx.stroke();
+          drawIon(pctx, a.x-dx, a.y-dy, 8.8*scale, '#c65c2e', '', .96);
+          drawIon(pctx, a.x+dx, a.y+dy, 8.8*scale, '#ef9a61', '', .96);
+          pctx.restore();
+        }
+        for (const f of flashes) {
+          pctx.strokeStyle = `rgba(255,213,119,${f.life})`; pctx.lineWidth = 2;
+          pctx.beginPath(); pctx.arc(f.x, f.y, 10 + (1-f.life)*26, 0, Math.PI*2); pctx.stroke();
+        }
+        particleBr2.textContent = agents.filter(a => a.species === 'br2').length;
+      }
+
+      function roundedRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+      }
+
+      function drawGraph() {
+        const { w, h } = graphSize;
+        gctx.clearRect(0, 0, w, h);
+        const pad = { l: w < 520 ? 58 : 72, r: 24, t: 28, b: 58 };
+        const pw = w - pad.l - pad.r;
+        const ph = h - pad.t - pad.b;
+        const X = t => pad.l + (t / MAX_T) * pw;
+        const Y = c => pad.t + ph - (c / 3.2) * ph;
+
+        gctx.font = '12px system-ui';
+        gctx.textAlign = 'center'; gctx.textBaseline = 'top';
+        for (let t = 0; t <= MAX_T; t += 100) {
+          const x = X(t);
+          gctx.strokeStyle = 'rgba(188,224,217,.10)'; gctx.lineWidth = 1;
+          gctx.beginPath(); gctx.moveTo(x, pad.t); gctx.lineTo(x, pad.t + ph); gctx.stroke();
+          gctx.fillStyle = '#91aaa8'; gctx.fillText(String(t), x, pad.t + ph + 11);
+        }
+        gctx.textAlign = 'right'; gctx.textBaseline = 'middle';
+        for (let c = 0; c <= 3; c++) {
+          const y = Y(c);
+          gctx.strokeStyle = 'rgba(188,224,217,.10)';
+          gctx.beginPath(); gctx.moveTo(pad.l, y); gctx.lineTo(pad.l + pw, y); gctx.stroke();
+          gctx.fillStyle = '#91aaa8'; gctx.fillText(String(c), pad.l - 12, y);
+        }
+
+        gctx.strokeStyle = 'rgba(229,245,242,.62)'; gctx.lineWidth = 1.5;
+        gctx.beginPath(); gctx.moveTo(pad.l, pad.t); gctx.lineTo(pad.l, pad.t+ph); gctx.lineTo(pad.l+pw, pad.t+ph); gctx.stroke();
+
+        gctx.save();
+        gctx.fillStyle = '#b7cbc9'; gctx.font = '600 12px system-ui';
+        gctx.textAlign = 'center'; gctx.textBaseline = 'bottom';
+        gctx.fillText('tid / s', pad.l + pw/2, h - 5);
+        gctx.translate(14, pad.t + ph/2); gctx.rotate(-Math.PI/2);
+        gctx.fillText('[Br₂] / mM', 0, 0);
+        gctx.restore();
+
+        if (time > 0) {
+          const grad = gctx.createLinearGradient(pad.l, 0, pad.l+pw, 0);
+          grad.addColorStop(0, '#58d5ca'); grad.addColorStop(1, '#ef7547');
+          gctx.strokeStyle = grad; gctx.lineWidth = 4; gctx.lineCap = 'round'; gctx.lineJoin = 'round';
+          gctx.shadowColor = 'rgba(88,213,202,.25)'; gctx.shadowBlur = 12;
+          gctx.beginPath();
+          for (let t = 0; t <= time; t += 2) {
+            const x = X(t), y = Y(concentration(t));
+            if (t === 0) gctx.moveTo(x, y); else gctx.lineTo(x, y);
+          }
+          gctx.lineTo(X(time), Y(concentration(time))); gctx.stroke();
+          gctx.shadowBlur = 0;
+        }
+
+        const cx = X(time), cy = Y(concentration(time));
+        gctx.setLineDash([4, 5]); gctx.strokeStyle = 'rgba(239,154,97,.35)'; gctx.lineWidth = 1;
+        gctx.beginPath(); gctx.moveTo(cx, cy); gctx.lineTo(cx, pad.t+ph); gctx.moveTo(cx, cy); gctx.lineTo(pad.l, cy); gctx.stroke();
+        gctx.setLineDash([]);
+        gctx.fillStyle = '#ffe1ce'; gctx.shadowColor = '#ef7547'; gctx.shadowBlur = 11;
+        gctx.beginPath(); gctx.arc(cx, cy, 5.5, 0, Math.PI*2); gctx.fill(); gctx.shadowBlur = 0;
+
+        const label = `${Math.round(time)} s · ${fmt(concentration(time))} mM`;
+        gctx.font = '700 12px system-ui';
+        const tw = gctx.measureText(label).width + 18;
+        const lx = Math.max(pad.l + 4, Math.min(cx - tw/2, pad.l + pw - tw));
+        const ly = Math.max(pad.t + 4, cy - 38);
+        gctx.fillStyle = 'rgba(7,20,22,.9)'; roundedRect(gctx, lx, ly, tw, 27, 7); gctx.fill();
+        gctx.strokeStyle = 'rgba(239,154,97,.35)'; gctx.stroke();
+        gctx.fillStyle = '#ffe1ce'; gctx.textAlign = 'center'; gctx.textBaseline = 'middle';
+        gctx.fillText(label, lx + tw/2, ly + 14);
+      }
+
+      function updateUI() {
+        const t = Math.round(time);
+        slider.value = t;
+        slider.style.setProperty('--progress', `${(time/MAX_T)*100}%`);
+        timeOutput.textContent = `${t} s`;
+        metricTime.textContent = `${t} s`;
+        metricConc.textContent = `${fmt(concentration(time))} mM`;
+        metricRate.textContent = `${fmt(rate(time), 3)} mM/s`;
+        temperatureOutput.textContent = `${temperature} °C`;
+        temperatureSlider.style.setProperty('--progress', `${((temperature-5)/75)*100}%`);
+        playBtn.textContent = playing ? '❚❚ Pause' : (time >= MAX_T ? '↺ Igen' : '▶ Start');
+        drawParticles();
+        drawGraph();
+      }
+
+      function togglePlay() {
+        if (time >= MAX_T) time = 0;
+        playing = !playing;
+        lastFrame = performance.now();
+        updateUI();
+      }
+
+      function reset() {
+        playing = false; time = 0; phase = 0; initAgents(); updateUI();
+      }
+
+      playBtn.addEventListener('click', togglePlay);
+      resetBtn.addEventListener('click', reset);
+      slider.addEventListener('input', () => {
+        time = Number(slider.value);
+        playing = false;
+        syncReactions(true);
+        updateUI();
+      });
+      temperatureSlider.addEventListener('input', () => {
+        temperature = Number(temperatureSlider.value);
+        syncReactions(true);
+        updateUI();
+      });
+
+      function animate(now) {
+        const dt = Math.min((now - lastFrame) / 1000, .1);
+        lastFrame = now;
+        phase += dt * (playing ? 1.5 : .22);
+        if (playing) {
+          time = Math.min(MAX_T, time + dt * SIM_SECONDS_PER_REAL_SECOND * Number(speedSelect.value));
+          updateAgents(dt);
+          syncReactions();
+          if (time >= MAX_T) playing = false;
+        }
+        updateUI();
+        requestAnimationFrame(animate);
+      }
+
+      const observer = new ResizeObserver(() => {
+        particleSize = sizeCanvas(particleCanvas, pctx);
+        graphSize = sizeCanvas(graphCanvas, gctx);
+        updateUI();
+      });
+      observer.observe(particleCanvas);
+      observer.observe(graphCanvas);
+      particleSize = sizeCanvas(particleCanvas, pctx);
+      graphSize = sizeCanvas(graphCanvas, gctx);
+      initAgents();
+      updateUI();
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
