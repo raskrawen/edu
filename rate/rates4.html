@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaktionshastighed – interaktiv simulation</title>
+
+
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#667085;--border:#d9deea;--a:#2b6cb0;--b:#d97706;--ab:#16a34a;--cat:#eab308;--grid:#e8ebf2}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
+.wrap{max-width:1280px;height:100%;margin:0 auto;padding:8px 12px;display:flex;flex-direction:column;overflow:hidden}
+h1{font-size:clamp(1.15rem,1.8vw,1.6rem);margin:0 0 2px;line-height:1.05}
+.sub{color:var(--muted);margin:0 0 5px;line-height:1.2;font-size:.78rem}
+.equation{display:inline-flex;align-items:center;gap:6px;font-weight:750;font-size:.95rem;background:#fff;border:1px solid var(--border);border-radius:999px;padding:4px 9px;margin-bottom:6px;align-self:flex-start}
+.grid{display:grid;grid-template-columns:minmax(245px,295px) minmax(0,1fr);gap:8px;align-items:stretch;flex:1;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:8px;min-height:0;overflow:hidden}
+.controls{display:grid;gap:4px}
+.control{padding-bottom:4px;border-bottom:1px solid var(--border)}
+.control:last-child{border-bottom:0;padding-bottom:0}
+.labelrow{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:1px}
+label{font-weight:700;font-size:.82rem}
+output{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;font-size:.78rem}
+input[type="range"]{width:100%;height:17px;margin:0}
+.hint{font-size:.66rem;color:var(--muted);line-height:1.12;margin-top:0}
+.switchrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.switch{position:relative;width:44px;height:25px;flex:0 0 auto}
+.switch input{opacity:0;width:0;height:0}
+.slider-switch{position:absolute;inset:0;background:#cfd5df;border-radius:999px;cursor:pointer;transition:.2s}
+.slider-switch:before{content:"";position:absolute;width:19px;height:19px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked + .slider-switch{background:var(--cat)}
+.switch input:checked + .slider-switch:before{transform:translateX(19px)}
+.buttons{display:flex;flex-wrap:wrap;gap:5px;margin-top:0}
+button{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;padding:5px 9px;font-weight:700;font-size:.76rem;cursor:pointer}
+button.primary{background:#172033;color:#fff;border-color:#172033}
+button:focus-visible,input:focus-visible{outline:3px solid rgba(43,108,176,.28);outline-offset:2px}
+.readouts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:6px}
+.readout{border:1px solid var(--border);border-radius:7px;padding:5px}
+.readout b{display:block;font-size:.86rem;font-variant-numeric:tabular-nums}
+.readout span{font-size:.56rem;color:var(--muted);line-height:1.05;display:block}
+.main{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:6px;min-height:0}
+.simgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:6px;min-height:0}
+.simgrid>.panel{display:flex;flex-direction:column;min-height:0}
+.cardtitle{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:3px}
+.cardtitle h2{font-size:.88rem;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:.68rem;color:var(--muted)}
+.key{display:inline-flex;align-items:center;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.canvasbox{position:relative;flex:1;min-height:0}
+canvas{width:100%;height:100%;display:block;background:#fbfcfe;border:1px solid var(--border);border-radius:8px;min-height:0}
+#chart{flex:1;min-height:0}
+.status{margin-top:4px;padding:5px 7px;border-radius:7px;background:#f7f9fc;color:var(--muted);font-size:.68rem;line-height:1.15}
+.explain{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.explain div{border-left:3px solid var(--border);padding:1px 5px;font-size:.65rem;line-height:1.12;color:var(--muted)}
+.explain b{color:var(--text);display:block;margin-bottom:1px}
+.foot{font-size:.61rem;color:var(--muted);line-height:1.1;margin-top:3px}
+@media(max-height:740px){.sub,.hint,.foot{display:none}.control{padding-bottom:3px}.controls{gap:3px}.equation{margin-bottom:4px}.readouts{margin-top:4px}.panel{padding:6px}}
+@media(max-height:620px){h1{font-size:1.05rem}.equation{font-size:.82rem;padding:2px 7px}.explain div{font-size:.58rem}.status{font-size:.61rem}}
+@media(max-width:900px){.grid{grid-template-columns:235px minmax(0,1fr)}.simgrid{grid-template-columns:minmax(0,1fr) minmax(235px,.9fr)}.hint{display:none}}
+.equilibrium-control{margin-top:6px;padding-top:5px;padding-bottom:0;border-top:1px solid var(--border);border-bottom:0}
+.equilibrium-control .hint{font-size:.59rem}
+.equilibrium-control .labelrow{margin-top:2px!important}
+</style>
+
+
+</head>
+<body>
+<div class="wrap">
+  <h1>Hvad bestemmer reaktionshastigheden?</h1>
+  <p class="sub">En forenklet, agentbaseret model. Partiklerne bevæger sig, støder sammen og kan reagere. Temperaturændringer ses straks som ændret partikelhastighed for både reaktanter, produkter og katalysatorpartikler. Justér temperatur, koncentrationer og katalysator. Reaktionen er A + 2B → ABB. Med ligevægt slået til kan den også gå den modsatte vej: ABB → A + 2B. A starter ved 0,40 M og B ved 0,80 M, og koncentrationssliderne går fra 0,00 M til 1,00 M.</p>
+  <div class="equation"><span style="color:var(--a)">A</span> + 2<span style="color:var(--b)">B</span> → <span style="color:var(--ab)">ABB</span></div>
+
+  <div class="grid">
+    <aside class="panel">
+      <div class="controls">
+        <div class="control">
+          <div class="labelrow"><label for="temp">Temperatur</label><output id="tempOut">25 °C</output></div>
+          <input id="temp" type="range" min="5" max="75" step="1" value="25">
+          <div class="hint">Højere temperatur giver hurtigere partikler og en større andel energirige sammenstød.</div>
+        </div>
+
+        <div class="control">
+          <div class="labelrow"><label for="concA">Startkoncentration A</label><output id="concAOut">0,80</output></div>
+          <input id="concA" type="range" min="0.00" max="1.00" step="0.05" value="0.40">
+        </div>
+
+        <div class="control">
+          <div class="labelrow"><label for="concB">Startkoncentration B</label><output id="concBOut">0,80</output></div>
+          <input id="concB" type="range" min="0.00" max="1.00" step="0.05" value="0.80">
+          <div class="hint">Større koncentration giver flere partikler pr. volumen og dermed flere sammenstød pr. tid.</div>
+        </div>
+
+        <div class="control">
+          <div class="switchrow">
+            <div>
+              <label for="catalyst">Katalysator</label>
+              <div class="hint">Gule katalysatorpartikler sænker modellens energikrav til et effektivt sammenstød og forbruges ikke.</div>
+            </div>
+            <label class="switch" aria-label="Katalysator til eller fra">
+              <input id="catalyst" type="checkbox">
+              <span class="slider-switch"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button id="start" class="primary" type="button">Start</button>
+          <button id="pause" type="button">Pause</button>
+          <button id="reset" type="button">Nulstil</button>
+        </div>
+      </div>
+
+      <div class="readouts" aria-live="polite">
+        <div class="readout"><b id="timeVal">0,0 s</b><span>simuleret tid</span></div>
+        <div class="readout"><b id="rateVal">0,000</b><span>Hastighed mht. A i M/s</span></div>
+        <div class="readout"><b id="collVal">0</b><span>effektive sammenstød</span></div>
+      </div>
+      <div class="control equilibrium-control">
+        <div class="switchrow">
+          <div>
+            <label for="equilibrium">Ligevægt</label>
+            <div class="hint">Når ligevægt er slået til, kan ABB også spaltes tilbage til A + 2B.</div>
+          </div>
+          <label class="switch" aria-label="Ligevægt til eller fra">
+            <input id="equilibrium" type="checkbox">
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+        <div class="labelrow" style="margin-top:4px"><label for="kEq">Ligevægtskonstant K</label><output id="kEqOut">10,0</output></div>
+        <input id="kEq" type="range" min="-1" max="2" step="0.05" value="1" disabled>
+        <div class="hint">K = [ABB] / ([A]·[B]²). Stor K favoriserer ABB; lille K favoriserer A og B.</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="simgrid">
+        <section class="panel">
+          <div class="cardtitle">
+            <h2>Partikelmodel</h2>
+            <div class="legend">
+              <span class="key"><i class="dot" style="background:var(--a)"></i>A</span>
+              <span class="key"><i class="dot" style="background:var(--b)"></i>B</span>
+              <span class="key"><i class="dot" style="background:var(--ab)"></i>ABB</span>
+              <span class="key"><i class="dot" style="background:var(--cat)"></i>katalysator</span>
+            </div>
+          </div>
+          <div class="canvasbox"><canvas id="particles" width="720" height="540"></canvas></div>
+          <div class="status" id="statusText">Simulationen er klar. Tryk Start.</div>
+        </section>
+
+        <section class="panel">
+          <div class="cardtitle">
+            <h2>Koncentration som funktion af tid</h2>
+            <div class="legend">
+              <span class="key"><i class="dot" style="background:var(--a)"></i>[A]</span>
+              <span class="key"><i class="dot" style="background:var(--b)"></i>[B]</span>
+              <span class="key"><i class="dot" style="background:var(--ab)"></i>[ABB]</span>
+            </div>
+          </div>
+          <canvas id="chart" width="720" height="405"></canvas>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="cardtitle"><h2>Hvad ændrer sliderne i modellen?</h2></div>
+        <div class="explain">
+          <div><b>Temperatur</b>Partiklernes fart og sandsynligheden for at overvinde aktiveringsenergien øges.</div>
+          <div><b>Koncentration</b>Antallet af A- og B-partikler i samme volumen ændres.</div>
+          <div><b>Katalysator</b>Flere kollisioner bliver effektive, fordi energikravet sænkes. Katalysatoren forbruges ikke.</div><div><b>Ligevægt</b>Når funktionen er slået til, kan ABB også spaltes til A + 2B. K bestemmer forholdet mellem fremad- og tilbagespaltnings-tendensen.</div>
+        </div>
+        <div class="foot">Modellen er didaktisk og kvalitativ, ikke en præcis molekylær dynamik-simulation. Kurverne beregnes direkte ud fra de reaktioner, der faktisk sker mellem agenterne. Hver produktdannelse forbruger 1 A og 2 B og danner 1 ABB. Grafen viser de faktiske modelkoncentrationer i M: blå = [A], orange = [B], grøn = [ABB]. Ved ligevægt bruges K = [ABB]/([A]·[B]²) som styrende modelparameter.</div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document;
+  const pCanvas = root.getElementById('particles');
+  const pctx = pCanvas.getContext('2d');
+  const cCanvas = root.getElementById('chart');
+  const cctx = cCanvas.getContext('2d');
+
+  const els = {
+    temp: root.getElementById('temp'),
+    concA: root.getElementById('concA'),
+    concB: root.getElementById('concB'),
+    catalyst: root.getElementById('catalyst'),
+    equilibrium: root.getElementById('equilibrium'),
+    kEq: root.getElementById('kEq'),
+    tempOut: root.getElementById('tempOut'),
+    concAOut: root.getElementById('concAOut'),
+    concBOut: root.getElementById('concBOut'),
+    kEqOut: root.getElementById('kEqOut'),
+    start: root.getElementById('start'),
+    pause: root.getElementById('pause'),
+    reset: root.getElementById('reset'),
+    timeVal: root.getElementById('timeVal'),
+    rateVal: root.getElementById('rateVal'),
+    collVal: root.getElementById('collVal'),
+    statusText: root.getElementById('statusText')
+  };
+
+  const css = getComputedStyle(document.documentElement);
+  const COLORS = {
+    A: css.getPropertyValue('--a').trim(),
+    B: css.getPropertyValue('--b').trim(),
+    AB: css.getPropertyValue('--ab').trim(),
+    CAT: css.getPropertyValue('--cat').trim(),
+    grid: css.getPropertyValue('--grid').trim(),
+    text: css.getPropertyValue('--text').trim(),
+    muted: css.getPropertyValue('--muted').trim(),
+    border: css.getPropertyValue('--border').trim()
+  };
+
+  let particles = [];
+  let history = [];
+  let running = false;
+  let simTime = 0;
+  let collisions = 0;
+  let recentReactions = [];
+  let lastTs = 0;
+  let raf = null;
+  let initialA = 0, initialB = 0;
+  const radius = 7;
+  const maxAgentsPerType = 140;
+  const catalystParticleCount = 18;
+  const timeScale = 3.2;
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function fmt(v, n=2){ return v.toFixed(n).replace('.', ','); }
+
+  function values(){
+    return {
+      T: +els.temp.value,
+      a: +els.concA.value,
+      b: +els.concB.value,
+      catalyst: els.catalyst.checked,
+      equilibrium: els.equilibrium.checked,
+      K: Math.pow(10, +els.kEq.value)
+    };
+  }
+
+  function updateOutputs(){
+    const v = values();
+    els.tempOut.textContent = `${Math.round(v.T)} °C`;
+    els.concAOut.textContent = `${fmt(v.a,2)} M`;
+    els.concBOut.textContent = `${fmt(v.b,2)} M`;
+    els.kEqOut.textContent = v.K < 10 ? fmt(v.K,2) : fmt(v.K,1);
+    els.kEq.disabled = !v.equilibrium;
+  }
+
+  function speedScale(T){
+    // Bevidst forstærket didaktisk temperatur-effekt:
+    // 25 °C er reference. Alle partikler bevæger sig nu dobbelt så hurtigt
+    // ved alle temperaturer sammenlignet med den forrige version.
+    return 168 * Math.exp((T - 25) / 42);
+  }
+
+  function rescaleParticleSpeeds(oldT, newT){
+    const oldS = speedScale(oldT);
+    const newS = speedScale(newT);
+    const factor = oldS > 0 ? newS / oldS : 1;
+    for(const p of particles){
+      p.vx *= factor;
+      p.vy *= factor;
+    }
+  }
+
+  function makeParticle(type){
+    const s = speedScale(values().T);
+    const angle = Math.random() * Math.PI * 2;
+    const jitter = 0.65 + Math.random() * 0.75;
+    const catScale = type === 'CAT' ? 0.55 : 1;
+    return {
+      type,
+      x: radius + Math.random() * (pCanvas.width - 2*radius),
+      y: radius + Math.random() * (pCanvas.height - 2*radius),
+      vx: Math.cos(angle) * s * jitter * catScale,
+      vy: Math.sin(angle) * s * jitter * catScale,
+      flash: 0
+    };
+  }
+
+  function syncCatalystParticles(){
+    particles = particles.filter(p => p.type !== 'CAT');
+    if(els.catalyst.checked){
+      for(let i=0;i<catalystParticleCount;i++) particles.push(makeParticle('CAT'));
+    }
+  }
+
+  function reset(){
+    running = false;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    lastTs = 0;
+    simTime = 0;
+    collisions = 0;
+    recentReactions = [];
+    particles = [];
+
+    const v = values();
+    lastTemperature = v.T;
+    initialA = Math.max(0, Math.round(maxAgentsPerType * v.a));
+    initialB = Math.max(0, Math.round(maxAgentsPerType * v.b));
+    for(let i=0;i<initialA;i++) particles.push(makeParticle('A'));
+    for(let i=0;i<initialB;i++) particles.push(makeParticle('B'));
+    syncCatalystParticles();
+
+    history = [{t:0, A:initialA/maxAgentsPerType, B:initialB/maxAgentsPerType, ABB:0}];
+    updateReadouts();
+    drawParticles();
+    drawChart();
+    els.statusText.textContent = 'Simulationen er klar. Tryk Start.';
+  }
+
+  function counts(){
+    let A=0,B=0,ABB=0;
+    for(const p of particles){
+      if(p.type==='A') A++;
+      else if(p.type==='B') B++;
+      else if(p.type==='ABB') ABB++;
+    }
+    return {A,B,ABB};
+  }
+
+  function effectiveProbability(relSpeed){
+    const v = values();
+    // Didaktisk tærskelmodel: højere T øger både relativ fart og energifraktion.
+    const energyFactor = clamp((relSpeed - 15) / 95, 0.03, 1);
+    const thermalFactor = clamp(0.22 + (v.T - 5) / 70 * 0.68, 0.18, 0.92);
+    const catalystFactor = v.catalyst ? 2.15 : 1.0;
+    return clamp(0.035 * energyFactor * thermalFactor * catalystFactor, 0, 0.72);
+  }
+
+  function react(i,j,k){
+    const pa = particles[i], pb1 = particles[j], pb2 = particles[k];
+    const x=(pa.x+pb1.x+pb2.x)/3;
+    const y=(pa.y+pb1.y+pb2.y)/3;
+    const vx=(pa.vx+pb1.vx+pb2.vx)/3;
+    const vy=(pa.vy+pb1.vy+pb2.vy)/3;
+
+    const idx=[i,j,k].sort((a,b)=>b-a);
+    for(const n of idx) particles.splice(n,1);
+
+    particles.push({type:'ABB',x,y,vx:vx*0.78,vy:vy*0.78,flash:0.22});
+    collisions++;
+    recentReactions.push(simTime);
+  }
+
+  function reverseProbabilityPerSecond(){
+    const v = values();
+    if(!v.equilibrium) return 0;
+
+    // Didaktisk, agentbaseret kobling mellem K og den modsatte reaktion.
+    // Stor K -> lille tilbagespaltningshastighed; lille K -> større.
+    // Temperatur og katalysator påvirker også den modsatte reaktion.
+    const tempFactor = Math.exp((v.T - 25) / 55);
+    const catFactor = v.catalyst ? 1.65 : 1.0;
+    const base = 0.18 * tempFactor * catFactor;
+    return clamp(base / Math.sqrt(v.K), 0.002, 2.5);
+  }
+
+  function splitABB(index){
+    const p = particles[index];
+    if(!p || p.type !== 'ABB') return;
+
+    const angle = Math.random() * Math.PI * 2;
+    const s = speedScale(values().T);
+    const offsets = [
+      {type:'A',  dx:-10, dy:0,   vx:-Math.cos(angle)*s*0.55, vy:-Math.sin(angle)*s*0.55},
+      {type:'B',  dx:7,   dy:-7,  vx: Math.cos(angle+1.9)*s*0.55, vy:Math.sin(angle+1.9)*s*0.55},
+      {type:'B',  dx:7,   dy:7,   vx: Math.cos(angle-1.9)*s*0.55, vy:Math.sin(angle-1.9)*s*0.55}
+    ];
+
+    particles.splice(index,1);
+    for(const q of offsets){
+      particles.push({
+        type:q.type,
+        x:clamp(p.x+q.dx, radius, pCanvas.width-radius),
+        y:clamp(p.y+q.dy, radius, pCanvas.height-radius),
+        vx:p.vx+q.vx,
+        vy:p.vy+q.vy,
+        flash:0.18
+      });
+    }
+  }
+
+  function update(dt){
+    const v = values();
+    const desired = speedScale(v.T);
+
+    for(const p of particles){
+      // Alle partikeltyper følger den aktuelle temperatur.
+      // Produkterne AB bevæger sig lidt langsommere end de frie reaktanter,
+      // men deres fart ændres tydeligt og øjeblikkeligt med temperaturslideren.
+      const sp = Math.hypot(p.vx,p.vy) || 1;
+      const typeFactor = p.type === 'ABB' ? 0.82 : (p.type === 'CAT' ? 0.55 : 1.0);
+      const target = desired * typeFactor;
+      const response = Math.min(1, 5.0 * dt);
+      const scale = (1 - response) + response * (target / sp);
+      p.vx *= scale;
+      p.vy *= scale;
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
+      if(p.x < radius){p.x=radius;p.vx=Math.abs(p.vx);}
+      if(p.x > pCanvas.width-radius){p.x=pCanvas.width-radius;p.vx=-Math.abs(p.vx);}
+      if(p.y < radius){p.y=radius;p.vy=Math.abs(p.vy);}
+      if(p.y > pCanvas.height-radius){p.y=pCanvas.height-radius;p.vy=-Math.abs(p.vy);}
+      p.flash = Math.max(0, p.flash-dt);
+    }
+
+    // Modsatrettet reaktion ved ligevægt: ABB -> A + 2B.
+    if(v.equilibrium){
+      const pRev = 1 - Math.exp(-reverseProbabilityPerSecond() * dt);
+      for(let i=particles.length-1;i>=0;i--){
+        if(particles[i].type==='ABB' && Math.random() < pRev){
+          splitABB(i);
+        }
+      }
+    }
+
+    // Kollisioner mellem A og B.
+    const minD = radius*2;
+    const minD2 = minD*minD;
+    outer:
+    for(let i=0;i<particles.length;i++){
+      const p=particles[i];
+      if(p.type==='ABB' || p.type==='CAT') continue;
+      for(let j=i+1;j<particles.length;j++){
+        const q=particles[j];
+        if(q.type==='ABB' || q.type==='CAT' || q.type===p.type) continue;
+        const dx=q.x-p.x, dy=q.y-p.y;
+        const d2=dx*dx+dy*dy;
+        if(d2 <= minD2){
+          const d=Math.sqrt(d2) || 0.01;
+          const nx=dx/d, ny=dy/d;
+          const rvx=q.vx-p.vx, rvy=q.vy-p.vy;
+          const approaching = rvx*nx + rvy*ny < 0;
+          if(approaching){
+            const relSpeed=Math.hypot(rvx,rvy);
+            if(Math.random() < effectiveProbability(relSpeed)){
+              const aIndex = p.type === 'A' ? i : j;
+              const b1Index = p.type === 'B' ? i : j;
+              const aPart = particles[aIndex];
+
+              // Reaktionen kræver i alt 1 A og 2 B.
+              // Når et effektivt A-B-sammenstød sker, skal en ekstra B-partikel
+              // være i nærheden, før produktet ABB kan dannes.
+              let b2Index = -1;
+              let bestD2 = 55*55;
+              for(let m=0;m<particles.length;m++){
+                if(m===aIndex || m===b1Index) continue;
+                const r=particles[m];
+                if(r.type!=='B') continue;
+                const ddx=r.x-aPart.x, ddy=r.y-aPart.y;
+                const dd2=ddx*ddx+ddy*ddy;
+                if(dd2 < bestD2){
+                  bestD2=dd2;
+                  b2Index=m;
+                }
+              }
+              if(b2Index >= 0){
+                react(aIndex,b1Index,b2Index);
+                break outer;
+              }
+            }
+            // Elastisk-ish afbøjning hvis ingen reaktion.
+            const impulse = rvx*nx + rvy*ny;
+            p.vx += impulse*nx; p.vy += impulse*ny;
+            q.vx -= impulse*nx; q.vy -= impulse*ny;
+          }
+          const overlap=minD-d;
+          if(overlap>0){
+            p.x-=nx*overlap*0.5;p.y-=ny*overlap*0.5;
+            q.x+=nx*overlap*0.5;q.y+=ny*overlap*0.5;
+          }
+        }
+      }
+    }
+
+    simTime += dt*timeScale;
+    recentReactions = recentReactions.filter(t => simTime - t <= 6);
+    if(history.length===0 || simTime-history[history.length-1].t >= 0.45){
+      const c=counts();
+      history.push({t:simTime,A:c.A/maxAgentsPerType,B:c.B/maxAgentsPerType,ABB:c.ABB/maxAgentsPerType});
+      if(history.length>700) history.shift();
+    }
+    const c=counts();
+    if(!v.equilibrium && (c.A===0 || c.B<2)){
+      running=false;
+      els.statusText.textContent='Reaktionen er standset, fordi der ikke længere er nok A og B til reaktionen A + 2B → ABB.';
+    } else {
+      const eqText = v.equilibrium ? ` · ligevægt til · K = ${v.K < 10 ? fmt(v.K,2) : fmt(v.K,1)}` : ' · ligevægt fra';
+      els.statusText.textContent = `Temperatur ${Math.round(v.T)} °C · katalysator ${v.catalyst?'til':'fra'}${eqText}.`;
+    }
+  }
+
+  function updateReadouts(){
+    els.timeVal.textContent = `${fmt(simTime,1)} s`;
+    const rate = recentReactions.length / 6;
+    els.rateVal.textContent = fmt(rate,3);
+    els.collVal.textContent = String(collisions);
+  }
+
+  function drawParticles(){
+    const ctx=pctx, w=pCanvas.width, h=pCanvas.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#fbfcfe';ctx.fillRect(0,0,w,h);
+
+    // diskret kammergrid
+    ctx.strokeStyle='#eef1f6';ctx.lineWidth=1;
+    for(let x=60;x<w;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+    for(let y=60;y<h;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+
+    for(const p of particles){
+      if(p.type==='ABB'){
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.fillStyle=COLORS.AB;
+        ctx.beginPath();ctx.arc(-7,0,7,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(4,-5,7,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(4,6,7,0,Math.PI*2);ctx.fill();
+        if(p.flash>0){
+          ctx.globalAlpha=p.flash/0.22;
+          ctx.strokeStyle=COLORS.AB;ctx.lineWidth=3;
+          ctx.beginPath();ctx.arc(0,0,18+(0.22-p.flash)*35,0,Math.PI*2);ctx.stroke();
+        }
+        ctx.restore();
+      }else if(p.type==='CAT'){
+        ctx.fillStyle=COLORS.CAT;
+        ctx.strokeStyle='#8a6a00';
+        ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.arc(p.x,p.y,radius+1,0,Math.PI*2);ctx.fill();ctx.stroke();
+      }else{
+        ctx.fillStyle = p.type==='A' ? COLORS.A : COLORS.B;
+        ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fill();
+      }
+    }
+  }
+
+  function drawChart(){
+    const ctx=cctx,w=cCanvas.width,h=cCanvas.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#fbfcfe';ctx.fillRect(0,0,w,h);
+    const m={l:55,r:18,t:18,b:45};
+    const pw=w-m.l-m.r, ph=h-m.t-m.b;
+    const maxT=Math.max(30, simTime*1.08);
+    const maxC=1.0;
+
+    ctx.strokeStyle=COLORS.grid;ctx.lineWidth=1;
+    ctx.fillStyle=COLORS.muted;ctx.font='13px system-ui';
+    ctx.textAlign='right';ctx.textBaseline='middle';
+    for(let k=0;k<=4;k++){
+      const y=m.t+ph*(1-k/4);
+      ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(w-m.r,y);ctx.stroke();
+      ctx.fillText(fmt(k/4,2),m.l-8,y);
+    }
+    ctx.textAlign='center';ctx.textBaseline='top';
+    for(let k=0;k<=5;k++){
+      const x=m.l+pw*k/5;
+      ctx.beginPath();ctx.moveTo(x,m.t);ctx.lineTo(x,m.t+ph);ctx.stroke();
+      ctx.fillText(fmt(maxT*k/5,0),x,m.t+ph+8);
+    }
+    ctx.fillStyle=COLORS.text;ctx.font='13px system-ui';
+    ctx.fillText('tid / s',m.l+pw/2,h-20);
+    ctx.save();ctx.translate(16,m.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('koncentration / M',0,0);ctx.restore();
+
+    const series=[
+      {key:'A',color:COLORS.A},
+      {key:'B',color:COLORS.B},
+      {key:'ABB',color:COLORS.AB}
+    ];
+    for(const s of series){
+      if(history.length<1) continue;
+      ctx.strokeStyle=s.color;ctx.lineWidth=3;ctx.beginPath();
+      history.forEach((d,idx)=>{
+        const x=m.l+clamp(d.t/maxT,0,1)*pw;
+        const y=m.t+ph*(1-clamp(d[s.key]/maxC,0,1));
+        idx===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    }
+    ctx.strokeStyle=COLORS.border;ctx.lineWidth=1.2;
+    ctx.strokeRect(m.l,m.t,pw,ph);
+  }
+
+  function frame(ts){
+    if(!running){ raf=null; return; }
+    if(!lastTs) lastTs=ts;
+    const dt=Math.min(0.032,(ts-lastTs)/1000);
+    lastTs=ts;
+    update(dt);
+    updateReadouts();
+    drawParticles();
+    drawChart();
+    if(running) raf=requestAnimationFrame(frame);
+    else raf=null;
+  }
+
+  els.start.addEventListener('click',()=>{
+    if(running) return;
+    const c=counts();
+    if(!els.equilibrium.checked && (c.A===0 || c.B<2)) reset();
+    running=true;
+    lastTs=0;
+    els.statusText.textContent='Simulationen kører.';
+    raf=requestAnimationFrame(frame);
+  });
+  els.pause.addEventListener('click',()=>{
+    running=false;
+    if(raf) cancelAnimationFrame(raf);
+    raf=null;
+    els.statusText.textContent='Simulationen er sat på pause.';
+  });
+  els.reset.addEventListener('click',reset);
+
+  let lastTemperature = +els.temp.value;
+
+  els.temp.addEventListener('input',()=>{
+    const newT = +els.temp.value;
+    rescaleParticleSpeeds(lastTemperature, newT);
+    lastTemperature = newT;
+    updateOutputs();
+    drawParticles();
+  });
+
+  [els.concA,els.concB].forEach(el=>{
+    el.addEventListener('input',()=>{
+      updateOutputs();
+      reset();
+    });
+  });
+
+  els.catalyst.addEventListener('change',()=>{
+    updateOutputs();
+    syncCatalystParticles();
+    drawParticles();
+  });
+
+  els.equilibrium.addEventListener('change',()=>{
+    updateOutputs();
+    drawParticles();
+    drawChart();
+  });
+
+  els.kEq.addEventListener('input',()=>{
+    updateOutputs();
+  });
+
+  updateOutputs();
+  reset();
+})();
+</script>
+</body>
+</html>
